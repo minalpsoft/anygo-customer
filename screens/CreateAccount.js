@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useState } from 'react';
 import AppLogo from '../components/AppLogo';
 import AppInput from '../components/AppInput';
@@ -8,10 +8,57 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import Checkbox from 'expo-checkbox';
 import { Ionicons } from '@expo/vector-icons';
+import { customerRegisterApi } from '../services/customerAuth';
 
 export default function LoginScreen() {
     const navigation = useNavigation();
-    const [accepted, setAccepted] = useState(false);
+
+    const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [mobile, setMobile] = useState('');
+  const [email, setEmail] = useState('');
+  const [accepted, setAccepted] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const handleRegister = async () => {
+    if (!firstName || !lastName || !mobile || !email) {
+      Alert.alert('Error', 'All fields are required');
+      return;
+    }
+
+    if (!accepted) {
+      Alert.alert('Error', 'Please accept Terms & Conditions');
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      await customerRegisterApi({
+        firstName,
+        lastName,
+        mobile,
+        email,
+        password: '123456', // TEMP password (can add input later)
+        acceptedTerms: accepted,
+      });
+
+      Alert.alert(
+        'Success',
+        'Account created successfully. Please login.'
+      );
+
+      navigation.replace('LoginScreen');
+
+    } catch (err) {
+      Alert.alert(
+        'Registration Failed',
+        err?.message || 'Something went wrong'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
     return (
         <LinearGradient
@@ -29,32 +76,33 @@ export default function LoginScreen() {
 
             <Text style={styles.title}>Create Account</Text>
 
-            <AppInput placeholder="Enter First Name" />
-            <AppInput placeholder="Enter Last Name" />
-            <AppInput placeholder="Enter Mobile Number" />
-            <AppInput placeholder="Enter Email" />
+             <AppInput placeholder="Enter First Name" value={firstName} onChangeText={setFirstName} />
+      <AppInput placeholder="Enter Last Name" value={lastName} onChangeText={setLastName} />
+      <AppInput placeholder="Enter Mobile Number" keyboardType="number-pad" value={mobile} onChangeText={setMobile} />
+      <AppInput placeholder="Enter Email" keyboardType="email-address" value={email} onChangeText={setEmail} />
 
-            <View style={styles.checkboxContainer}>
-                <Checkbox
-                    value={accepted}
-                    onValueChange={setAccepted}
-                    color={accepted ? COLORS.primary : undefined}
-                />
+      {/* <View style={styles.checkboxContainer}>
+        <Checkbox
+          value={accepted}
+          onValueChange={setAccepted}
+          color={accepted ? COLORS.primary : undefined}
+        />
 
-                <TouchableOpacity onPress={() => alert('Open Terms & Conditions')}>
-                    <Text style={styles.termsText}>
-                        I agree to accept Terms & Conditions
-                    </Text>
-                    <Text style={styles.termsText}>
-                        <Text style={styles.link}>Click here </Text>to read Terms and Conditions and Privacy Policy
-                    </Text>
-                </TouchableOpacity>
-            </View>
+        <TouchableOpacity>
+          <Text style={styles.termsText}>
+            I agree to accept Terms & Conditions
+          </Text>
+          <Text style={styles.termsText}>
+            <Text style={styles.link}>Click here </Text>
+            to read Terms and Conditions and Privacy Policy
+          </Text>
+        </TouchableOpacity>
+      </View> */}
 
-            <AppButton title="Next"
-                onPress={() => navigation.navigate('Dashboard')}
-            // navigation.replace('App'); 
-            />
+      <AppButton
+        title={loading ? 'Creating...' : 'Next'}
+        onPress={handleRegister}
+      />
 
         </LinearGradient>
     );

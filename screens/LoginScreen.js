@@ -1,13 +1,51 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Alert } from 'react-native';
 import AppLogo from '../components/AppLogo';
 import AppInput from '../components/AppInput';
 import AppButton from '../components/AppButton';
 import { COLORS } from '../theme/colors';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
+import { useState } from 'react';
+import { customerLoginApi } from '../services/customerAuth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function LoginScreen() {
   const navigation = useNavigation();
+
+  const [mobile, setMobile] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleLogin = async () => {
+    if (!mobile || !password) {
+      Alert.alert('Error', 'Mobile & password required');
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const res = await customerLoginApi({
+        mobile,
+        password,
+      });
+
+      await AsyncStorage.setItem('token', res.token);
+
+      Alert.alert('Success', 'Login successful');
+      
+      navigation.replace('Dashboard');
+
+    } catch (err) {
+      Alert.alert(
+        'Login Failed',
+        err?.message || 'Invalid mobile or password'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   return (
     <LinearGradient
@@ -19,18 +57,30 @@ export default function LoginScreen() {
 
       <Text style={styles.title}>Customer Login</Text>
 
-      <AppInput placeholder="Enter Mobile Number" />
-      <AppInput placeholder="Enter Password" secureTextEntry />
-      <AppButton title="Submit" 
-      onPress={() => navigation.navigate('CreateAccount')}
-      // navigation.replace('App'); 
+      <AppInput
+        placeholder="Enter Mobile Number"
+        keyboardType="number-pad"
+        value={mobile}
+        onChangeText={setMobile}
+      />
+
+      <AppInput
+        placeholder="Enter Password"
+        secureTextEntry
+        value={password}
+        onChangeText={setPassword}
+      />
+
+      <AppButton
+        title={loading ? 'Logging in...' : 'Submit'}
+        onPress={handleLogin}
       />
 
 
 
       <View style={styles.links}>
         <Text style={styles.link}>Forgot Password</Text>
-        <Text style={styles.link}>Create Account</Text>
+        <Text style={styles.link} onPress={() => navigation.navigate('CreateAccount')}>Create Account</Text>
       </View>
     </LinearGradient>
   );
