@@ -1,13 +1,20 @@
 import { TextInput, StyleSheet } from 'react-native';
 import { COLORS } from '../theme/colors';
 
-export default function AppInput({ placeholder, secureTextEntry }) {
+export default function AppInput({ value,
+   onChangeText,
+  placeholder,
+  keyboardType,
+  secureTextEntry,
+ }) {
   return (
     <TextInput
-      placeholder={placeholder}
-      secureTextEntry={secureTextEntry}
-      placeholderTextColor="#888"
       style={styles.input}
+      placeholder={placeholder}
+      value={value}
+      onChangeText={onChangeText}
+      keyboardType={keyboardType}
+      secureTextEntry={secureTextEntry}
     />
   );
 }

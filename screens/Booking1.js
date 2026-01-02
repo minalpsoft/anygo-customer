@@ -1,71 +1,68 @@
-import React from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TextInput,
-    ScrollView,
-    TouchableOpacity, Image
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { COLORS } from '../theme/colors';
 import BottomTabs from '../components/BottomTabs';
 import AppHeader from '../components/AppHeader';
 import AppSearch from '../components/AppSearch';
-import MapView, { Marker } from 'react-native-maps';
-
+import AppButton from '../components/AppButton';
+import { routeCheckApi } from '../services/customerAuth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Booking1({ navigation }) {
+    const [tripType, setTripType] = useState('CITY');
+   
+    const handleRouteCheck = async () => {
+  try {
+    const res = await routeCheckApi({
+      pickupLat,
+      pickupLng,
+      dropLat,
+      dropLng,
+    });
 
+    navigation.navigate('Booking2', {
+      ...res,
+      pickup: { lat: pickupLat, lng: pickupLng },
+      drop: { lat: dropLat, lng: dropLng },
+      tripType,
+    });
+  } catch (err) {
+    console.log(err);
+    Alert.alert('Error', 'Route check failed');
+  }
+};
 
 
     return (
         <View style={styles.container}>
-            <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+            <ScrollView>
 
-                {/* HEADER */}
                 <AppHeader />
 
-                {/* SEARCH */}
-                <AppSearch
-                    placeholder="Kamothe"
-                    onPress={() => navigation.navigate('Booking2')}
+                <AppSearch placeholder="Pickup location" />
+                <AppSearch placeholder="Drop location" />
 
-                />
-
-               
-                <View style={styles.mapBox}>
-
-                    <View style={styles.mapContainer}>
-                        <MapView
-                            style={StyleSheet.absoluteFillObject}
-                            initialRegion={{
-                                latitude: 19.0760,
-                                longitude: 72.8777,
-                                latitudeDelta: 0.05,
-                                longitudeDelta: 0.05,
-                            }}
-                        />
-                    </View>
+                {/* Trip Type */}
+                <View style={styles.tripTypeRow}>
+                    {['CITY', 'OUTSTATION'].map(type => (
+                        <TouchableOpacity
+                            key={type}
+                            style={[
+                                styles.tripBtn,
+                                tripType === type && styles.activeTrip,
+                            ]}
+                            onPress={() => setTripType(type)}
+                        >
+                            <Text style={styles.tripText}>{type}</Text>
+                        </TouchableOpacity>
+                    ))}
                 </View>
 
-              
-               <View style={styles.mapBox}>
-
-                    <View style={styles.mapContainer}>
-                        <MapView
-                            style={StyleSheet.absoluteFillObject}
-                            initialRegion={{
-                                latitude: 19.0760,
-                                longitude: 72.8777,
-                                latitudeDelta: 0.05,
-                                longitudeDelta: 0.05,
-                            }}
-                        />
-                    </View>
+                <View style={styles.content}>
+                    <AppButton title="Next" onPress={handleRouteCheck} />
                 </View>
-
             </ScrollView>
+
             <BottomTabs />
         </View>
     );
@@ -75,36 +72,30 @@ export default function Booking1({ navigation }) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#FFFF',
+        backgroundColor: '#fff',
     },
-
-
-
-    mapBox: {
-        height: 160,
-        backgroundColor: '#E0E0E0',
-        borderRadius: 16,
-        marginBottom: 16,
+    content: {
+        paddingHorizontal: 20,
+    },
+    tripTypeRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
         marginHorizontal: 16,
-        overflow: 'hidden',
+        marginBottom: 16,
     },
-
-    mapContainer: {
+    tripBtn: {
         flex: 1,
-    },
-
-    offerBox: {
-        height: 170,
-        backgroundColor: '#E0E0E0',
+        padding: 14,
         borderRadius: 10,
-        justifyContent: 'center',
+        backgroundColor: '#E0E0E0',
         alignItems: 'center',
-        marginBottom: 16,
-        marginHorizontal: 16,
-        elevation: 3,
+        marginHorizontal: 6,
     },
-    placeholder: {
-        alignItems: "center",
-        justifyContent: "center"
+    activeTrip: {
+        backgroundColor: COLORS.primary,
+    },
+    tripText: {
+        color: '#fff',
+        fontWeight: '600',
     },
 });

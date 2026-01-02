@@ -16,35 +16,38 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async () => {
-    if (!mobile || !password) {
-      Alert.alert('Error', 'Mobile & password required');
-      return;
-    }
+ const handleLogin = async () => {
+  if (!mobile || !password) {
+    Alert.alert('Error', 'Mobile & password required');
+    return;
+  }
 
-    try {
-      setLoading(true);
+  try {
+    setLoading(true);
 
-      const res = await customerLoginApi({
-        mobile,
-        password,
-      });
+    const res = await customerLoginApi({
+      mobile: String(mobile),
+      password,
+    });
 
-      await AsyncStorage.setItem('token', res.token);
+    const token = res.token;
+    if (!token) throw new Error('Token missing');
 
-      Alert.alert('Success', 'Login successful');
-      
-      navigation.replace('Dashboard');
+    await AsyncStorage.setItem('token', token);
+    console.log('STORED TOKEN 👉', token);
 
-    } catch (err) {
-      Alert.alert(
-        'Login Failed',
-        err?.message || 'Invalid mobile or password'
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'Dashboard' }],
+    });
+
+  } catch (err) {
+    console.log('LOGIN ERROR 👉', err);
+    Alert.alert('Login Failed', 'Unable to connect to server');
+  } finally {
+    setLoading(false);
+  }
+};
 
 
   return (
@@ -53,7 +56,7 @@ export default function LoginScreen() {
       style={styles.container}
     >
 
-      <AppLogo />
+      {/* <AppLogo /> */}
 
       <Text style={styles.title}>Customer Login</Text>
 

@@ -1,70 +1,98 @@
-import React from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TextInput,
-    ScrollView,
-    TouchableOpacity, Image
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { COLORS } from '../theme/colors';
-import BottomTabs from '../components/BottomTabs';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import MapView, { Marker, Polyline } from 'react-native-maps';
 import AppHeader from '../components/AppHeader';
-import AppSearch from '../components/AppSearch';
-import MapView, { Marker } from 'react-native-maps';
-import AppInput from '../components/AppInput';
 import AppButton from '../components/AppButton';
-import Booking3 from './Booking3';
+import BottomTabs from '../components/BottomTabs';
+import { bookingEstimateApi } from '../services/customerAuth';
 
-export default function Booking2({ navigation }) {
+export default function Booking2({ route, navigation }) {
+  const { pickup, drop, distanceKm, durationMin, tripType } = route.params;
+  const token = 'USER_JWT_TOKEN';
 
+  const [vehicles, setVehicles] = useState([]);
 
+  useEffect(() => {
+    getEstimate();
+  }, []);
 
-    return (
-        <View style={styles.container}>
-            <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+  const getEstimate = async () => {
+    const res = await bookingEstimateApi({
+      pickupLat: pickup.lat,
+      pickupLng: pickup.lng,
+      dropLat: drop.lat,
+      dropLng: drop.lng,
+    });
 
-                {/* HEADER */}
-                <AppHeader />
+    setVehicles(res.vehicles);
+  };
 
-                {/* SEARCH */}
-                <AppSearch placeholder="Pickup Address" />
-                <AppSearch placeholder="Drop Address" />
+  return (
+    <View style={styles.container}>
+      <ScrollView>
 
-              <View style={styles.mapBox}>
+        <AppHeader />
 
-                    <View style={styles.mapContainer}>
-                        <MapView
-                            style={StyleSheet.absoluteFillObject}
-                            initialRegion={{
-                                latitude: 19.0760,
-                                longitude: 72.8777,
-                                latitudeDelta: 0.05,
-                                longitudeDelta: 0.05,
-                            }}
-                        />
-                    </View>
-                </View>
+        {/* MAP WITH ROUTE */}
+        <View style={styles.mapBox}>
+          <MapView
+            style={StyleSheet.absoluteFillObject}
+            initialRegion={{
+              latitude: pickup.lat,
+              longitude: pickup.lng,
+              latitudeDelta: 0.1,
+              longitudeDelta: 0.1,
+            }}
+          >
+            <Marker coordinate={pickup} title="Pickup" />
+            <Marker coordinate={drop} title="Drop" />
 
-                <View style={styles.content}>
-                    <AppInput placeholder="Receiver's Name" />
-                    <AppInput placeholder="Receiver's Mobile Number" />
-                    <AppButton title="Next" onPress={() => navigation.navigate('Booking3')} />
-                </View>
-
-
-            </ScrollView>
-            <BottomTabs />
+            {/* POLYLINE */}
+            <Polyline
+              coordinates={[pickup, drop]}
+              strokeWidth={4}
+              strokeColor="#1E88E5"
+            />
+          </MapView>
         </View>
-    );
+
+        {/* INFO */}
+        <Text style={styles.info}>Distance: {distanceKm} km</Text>
+        <Text style={styles.info}>Duration: {durationMin} min</Text>
+
+        {/* VEHICLES */}
+        {vehicles.map(v => (
+          <View key={v.vehicleType} style={styles.vehicleCard}>
+            <Text>{v.vehicleType}</Text>
+            <Text>ETA: {v.etaMin} min</Text>
+            <AppButton
+              title="Select"
+              onPress={() =>
+                navigation.navigate('Booking3', {
+                  vehicle: v,
+                  pickup,
+                  drop,
+                  distanceKm,
+                  durationMin,
+                  tripType,
+                })
+              }
+            />
+          </View>
+        ))}
+      </ScrollView>
+
+      <BottomTabs />
+    </View>
+  );
 }
+
 
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-      backgroundColor: '#FFFF',
+        backgroundColor: '#FFFF',
     },
 
 
@@ -84,7 +112,7 @@ const styles = StyleSheet.create({
         flex: 1,
     },
 
-      offerBox: {
+    offerBox: {
         height: 170,
         backgroundColor: '#E0E0E0',
         borderRadius: 10,
@@ -94,7 +122,7 @@ const styles = StyleSheet.create({
         marginHorizontal: 16,
         elevation: 3,
     },
-  placeholder: {
+    placeholder: {
         alignItems: "center",
         justifyContent: "center"
     },

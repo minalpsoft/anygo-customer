@@ -17,48 +17,49 @@ export default function LoginScreen() {
   const [lastName, setLastName] = useState('');
   const [mobile, setMobile] = useState('');
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [accepted, setAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleRegister = async () => {
-    if (!firstName || !lastName || !mobile || !email) {
-      Alert.alert('Error', 'All fields are required');
-      return;
-    }
+// const handleRegister = async () => {
+//   if (!firstName || !lastName || !mobile || !email || !password) {
+//     Alert.alert('Error', 'All fields are required');
+//     return;
+//   }
 
-    if (!accepted) {
-      Alert.alert('Error', 'Please accept Terms & Conditions');
-      return;
-    }
+//   if (!accepted) {
+//     Alert.alert('Error', 'Please accept Terms & Conditions');
+//     return;
+//   }
 
-    try {
-      setLoading(true);
+//   setLoading(true);
 
-      await customerRegisterApi({
-        firstName,
-        lastName,
-        mobile,
-        email,
-        password: '123456', // TEMP password (can add input later)
-        acceptedTerms: accepted,
-      });
+//   try {
+//     // Call API (it WILL throw 500 — ignore it)
+//     await customerRegisterApi({
+//       firstName,
+//       lastName,
+//       mobile,
+//       email,
+//       password,
+//       acceptedTerms: accepted,
+//     });
+//   } catch (err) {
+//     // Log only for debugging
+//     console.log('REGISTER API ERROR (EXPECTED):', err);
+//   } finally {
+//     // 🔥 ALWAYS EXECUTED
+//     await AsyncStorage.setItem('otp_mobile', mobile);
+//     await AsyncStorage.setItem('otp_userType', 'customer');
 
-      Alert.alert(
-        'Success',
-        'Account created successfully. Please login.'
-      );
+//     Alert.alert('OTP Sent', 'Please verify OTP');
 
-      navigation.replace('LoginScreen');
+//     navigation.navigate('CustomerVerification');
 
-    } catch (err) {
-      Alert.alert(
-        'Registration Failed',
-        err?.message || 'Something went wrong'
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+//     setLoading(false);
+//   }
+// };
+
 
     return (
         <LinearGradient
@@ -72,7 +73,7 @@ export default function LoginScreen() {
                 </TouchableOpacity>
             </View>
 
-            <AppLogo />
+            {/* <AppLogo /> */}
 
             <Text style={styles.title}>Create Account</Text>
 
@@ -80,8 +81,9 @@ export default function LoginScreen() {
       <AppInput placeholder="Enter Last Name" value={lastName} onChangeText={setLastName} />
       <AppInput placeholder="Enter Mobile Number" keyboardType="number-pad" value={mobile} onChangeText={setMobile} />
       <AppInput placeholder="Enter Email" keyboardType="email-address" value={email} onChangeText={setEmail} />
+      <AppInput placeholder="Enter Password" value={password} onChangeText={setPassword} />
 
-      {/* <View style={styles.checkboxContainer}>
+      <View style={styles.checkboxContainer}>
         <Checkbox
           value={accepted}
           onValueChange={setAccepted}
@@ -97,11 +99,12 @@ export default function LoginScreen() {
             to read Terms and Conditions and Privacy Policy
           </Text>
         </TouchableOpacity>
-      </View> */}
+      </View>
 
       <AppButton
         title={loading ? 'Creating...' : 'Next'}
-        onPress={handleRegister}
+        // onPress={handleRegister}
+        onPress={() => navigation.navigate('Dashboard')}
       />
 
         </LinearGradient>
@@ -126,7 +129,7 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: COLORS.text,
         textAlign: 'center',
-        marginTop: 40,
+        marginTop: 20,
         marginBottom: 30,
     },
     checkboxContainer: {
