@@ -15,27 +15,44 @@ export default function LoginScreen() {
   const [mobile, setMobile] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+ const API_BASE_URL = 'http://192.168.31.89:3000/';
 
- const handleLogin = async () => {
+const handleLogin = async () => {
   if (!mobile || !password) {
     Alert.alert('Error', 'Mobile & password required');
     return;
   }
 
-  try {
-    setLoading(true);
+  setLoading(true);
 
-    const res = await customerLoginApi({
-      mobile: String(mobile),
-      password,
+  try {
+    const res = await fetch(`${API_BASE_URL}auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        mobile: String(mobile),
+        password,
+      }),
     });
 
-    const token = res.token;
-    if (!token) throw new Error('Token missing');
+    const data = await res.json();
+    console.log('LOGIN RESPONSE 👉', data);
 
-    await AsyncStorage.setItem('token', token);
-    console.log('STORED TOKEN 👉', token);
+    if (!res.ok) {
+      throw data;
+    }
 
+    if (!data?.token) {
+      throw new Error('Token missing from response');
+    }
+
+    // ✅ Store token
+    await AsyncStorage.setItem('token', data.token);
+    console.log('STORED TOKEN 👉', data.token);
+
+    // ✅ Go to dashboard & reset stack
     navigation.reset({
       index: 0,
       routes: [{ name: 'Dashboard' }],
@@ -43,7 +60,11 @@ export default function LoginScreen() {
 
   } catch (err) {
     console.log('LOGIN ERROR 👉', err);
-    Alert.alert('Login Failed', 'Unable to connect to server');
+
+    Alert.alert(
+      'Login Failed',
+      err?.message || 'Invalid mobile or password'
+    );
   } finally {
     setLoading(false);
   }

@@ -35,14 +35,24 @@ export default function Dashboard({ navigation }) {
                 <AppHeader />
 
                 {/* SEARCH */}
-                <AppSearch
+                {/* <AppSearch
                     placeholder="Search Destination"
                     onPress={() => navigation.navigate('Booking1')}
-                />
+                /> */}
+
+                {/* SEARCH DESIGN */}
+                <TouchableOpacity
+                    style={styles.searchBox}
+                    activeOpacity={0.8}
+                    onPress={() => navigation.navigate('Booking1')}
+                >
+                    <Ionicons name="search" size={20} color="#777" />
+                    <Text style={styles.searchText}>Search Destination</Text>
+                </TouchableOpacity>
 
                 {/* MAP */}
                 {/* <View style={styles.mapBox}> */}
-                    {/* <View style={styles.offerBox}>
+                {/* <View style={styles.offerBox}>
                     <Text style={styles.placeholder}>Map Placeholder</Text>
                 </View> */}
                 {/* </View> */}
@@ -131,7 +141,22 @@ const styles = StyleSheet.create({
         backgroundColor: '#FFFF',
     },
 
-
+    searchBox: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#F2F2F2',
+        paddingVertical: 14,
+        paddingHorizontal: 16,
+        borderRadius: 10,
+        marginHorizontal: 16,
+        marginTop: 12,
+        marginBottom:15
+    },
+    searchText: {
+        marginLeft: 10,
+        fontSize: 16,
+        color: '#777',
+    },
 
     mapBox: {
         height: 160,

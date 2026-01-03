@@ -16,43 +16,65 @@ export default function CustomerVerification() {
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
 
- const handleVerifyOtp = async () => {
-  setLoading(true);
+  const API_BASE_URL = 'http://192.168.31.89:3000/';
 
-  try {
-    const mobile = await AsyncStorage.getItem('otp_mobile');
-
-    if (!mobile || !otp) {
-      Alert.alert('Error', 'OTP or mobile missing');
+  const handleVerifyOtp = async () => {
+    if (!otp) {
+      Alert.alert('Error', 'Please enter OTP');
       return;
     }
 
-    const res = await verifyOtpApi({
-      mobile,
-      otp,
-      userType: 'customer',
-    });
+    setLoading(true);
 
-    if (res?.verified === true) {
-      await AsyncStorage.removeItem('otp_mobile');
-      await AsyncStorage.removeItem('otp_userType');
+    try {
+      const mobile = await AsyncStorage.getItem('otp_mobile');
 
-      Alert.alert('Success', 'Account created successfully');
+      if (!mobile) {
+        Alert.alert('Error', 'Mobile number missing. Please register again.');
+        return;
+      }
 
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'Dashboard' }],
+      const res = await fetch(`${API_BASE_URL}auth/verify-otp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          mobile,
+          otp,
+          userType: 'customer',
+        }),
       });
-    } else {
-      Alert.alert('Failed', 'Invalid OTP');
-    }
 
-  } catch (err) {
-    Alert.alert('Error', 'OTP verification failed');
-  } finally {
-    setLoading(false);
-  }
-};
+      const data = await res.json();
+      console.log('OTP VERIFY RESPONSE 👉', data);
+
+      if (!res.ok) {
+        throw data;
+      }
+
+      if (data?.message === 'OTP verified successfully') {
+        await AsyncStorage.multiRemove(['otp_mobile', 'otp_userType']);
+
+        Alert.alert('Success', 'Account created successfully', [
+          {
+            text: 'OK',
+            onPress: () => navigation.replace('Login'),
+          },
+        ]);
+      } else {
+        Alert.alert('Failed', 'Invalid OTP');
+      }
+
+
+    } catch (err) {
+      console.log('OTP VERIFY ERROR 👉', err);
+      Alert.alert('Error', err?.message || 'OTP verification failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
 
 

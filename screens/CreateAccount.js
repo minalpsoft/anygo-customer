@@ -9,8 +9,9 @@ import { useNavigation } from '@react-navigation/native';
 import Checkbox from 'expo-checkbox';
 import { Ionicons } from '@expo/vector-icons';
 import { customerRegisterApi } from '../services/customerAuth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export default function LoginScreen() {
+export default function CreateAccount() {
     const navigation = useNavigation();
 
     const [firstName, setFirstName] = useState('');
@@ -20,6 +21,51 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [accepted, setAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
+const API_BASE_URL = 'http://192.168.31.89:3000/';
+
+const handleRegister = async () => {
+  if (!firstName || !lastName || !mobile || !email || !password) {
+    Alert.alert('Error', 'All fields are required');
+    return;
+  }
+
+  if (!accepted) {
+    Alert.alert('Error', 'Please accept Terms & Conditions');
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+  const res = await fetch(`${API_BASE_URL}customer/register`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      firstName,
+      lastName,
+      mobile,
+      email,
+      password,
+      acceptedTerms: accepted,
+    }),
+  });
+
+  const data = await res.json();
+  console.log('FETCH RESPONSE 👉', data);
+// navigation.navigate('CustomerVerification');
+if (data?.otpRequired) {
+  await AsyncStorage.setItem('otp_mobile', mobile);
+  await AsyncStorage.setItem('otp_userType', 'customer');
+
+  navigation.navigate('CustomerVerification');
+}
+} catch (e) {
+  console.log('FETCH ERROR 👉', e);
+}
+
+};
 
 // const handleRegister = async () => {
 //   if (!firstName || !lastName || !mobile || !email || !password) {
@@ -35,8 +81,7 @@ export default function LoginScreen() {
 //   setLoading(true);
 
 //   try {
-//     // Call API (it WILL throw 500 — ignore it)
-//     await customerRegisterApi({
+//     const res = await customerRegisterApi({
 //       firstName,
 //       lastName,
 //       mobile,
@@ -44,22 +89,29 @@ export default function LoginScreen() {
 //       password,
 //       acceptedTerms: accepted,
 //     });
-//   } catch (err) {
-//     // Log only for debugging
-//     console.log('REGISTER API ERROR (EXPECTED):', err);
-//   } finally {
-//     // 🔥 ALWAYS EXECUTED
+
+//     console.log('REGISTER RESPONSE 👉', res);
+
+//     // ✅ Save data for OTP screen
 //     await AsyncStorage.setItem('otp_mobile', mobile);
 //     await AsyncStorage.setItem('otp_userType', 'customer');
 
-//     Alert.alert('OTP Sent', 'Please verify OTP');
+//     // ✅ Navigate ALWAYS on success
+//     Alert.alert('OTP', res.message);
 
-//     navigation.navigate('CustomerVerification');
+    
 
+//   } catch (err) {
+//     console.log('REGISTER FAILED 👉', err);
+
+//     Alert.alert(
+//       'Registration Failed',
+//       err.message || 'Something went wrong'
+//     );
+//   } finally {
 //     setLoading(false);
 //   }
 // };
-
 
     return (
         <LinearGradient
@@ -103,8 +155,8 @@ export default function LoginScreen() {
 
       <AppButton
         title={loading ? 'Creating...' : 'Next'}
-        // onPress={handleRegister}
-        onPress={() => navigation.navigate('Dashboard')}
+        onPress={handleRegister}
+        // onPress={() => navigation.navigate('Dashboard')}
       />
 
         </LinearGradient>

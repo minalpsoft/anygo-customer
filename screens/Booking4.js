@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
     StyleSheet,
     TextInput,
     ScrollView,
-    TouchableOpacity, Image
+    TouchableOpacity, Image, Alert
 } from 'react-native';
 import { COLORS } from '../theme/colors';
 import BottomTabs from '../components/BottomTabs';
@@ -14,13 +14,63 @@ import AppButton from '../components/AppButton';
 import Checkbox from 'expo-checkbox';
 import { Picker } from '@react-native-picker/picker';
 import RideCard from '../components/Card';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export default function Booking4({ navigation }) {
+export default function Booking4({ route, navigation }) {
+    const { bookingId } = route.params;
+
 
     const [accepted, setAccepted] = useState(false);
     const [labourCount, setLabourCount] = useState(1);
     const [coupon, setCoupon] = useState('');
+    const [booking, setBooking] = useState(null);
+    const [loading, setLoading] = useState(true);
+const baseFare = booking?.estimatedFare || 0;
+const labourCharge = accepted ? labourCount * 200 : 0;
+const discount = coupon ? 20 : 0;
 
+const payableAmount = baseFare + labourCharge - discount;
+
+
+    const API_BASE_URL = 'http://192.168.31.89:3000/';
+
+    useEffect(() => {
+        fetchBooking();
+    }, []);
+
+    const fetchBooking = async () => {
+        try {
+            const token = await AsyncStorage.getItem('token');
+
+            const res = await fetch(
+                `${API_BASE_URL}booking/${bookingId}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            const data = await res.json();
+            if (!res.ok) throw data;
+
+            setBooking(data);
+        } catch (err) {
+            Alert.alert('Error', err?.message || 'Failed to load booking');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+if (loading) {
+  return (
+    <View style={styles.container}>
+      <Text style={{ textAlign: 'center', marginTop: 50 }}>
+        Loading booking...
+      </Text>
+    </View>
+  );
+}
 
     return (
         <View style={styles.container}>
@@ -30,17 +80,27 @@ export default function Booking4({ navigation }) {
                 <AppHeader />
 
                 {/* RIDE CARD */}
-                <RideCard>
-                    <View style={styles.driverRow}>
-                        <View style={styles.infoBlock}>
-                            <View style={styles.rowBetween}>
-                                <Text style={styles.vehicleName}>2 Wheeler</Text>
-                                <Text style={styles.price}>₹ 210.00</Text>
+                {booking && (
+                    <RideCard>
+                        <View style={styles.driverRow}>
+                            <View style={styles.infoBlock}>
+                                <View style={styles.rowBetween}>
+                                    <Text style={styles.vehicleName}>
+                                        {booking.vehicleType}
+                                    </Text>
+                                    <Text style={styles.price}>
+                                        ₹ {booking.estimatedFare || booking.finalFare}
+                                    </Text>
+                                </View>
+
+                                <Text style={styles.address}>
+                                    {booking.distanceKm} Km · {booking.durationMin} Min away
+                                </Text>
                             </View>
-                            <Text style={styles.address}>20 Km · 3 Min away</Text>
                         </View>
-                    </View>
-                </RideCard>
+                    </RideCard>
+                )}
+
 
 
                 <View style={styles.content}>
@@ -98,31 +158,34 @@ export default function Booking4({ navigation }) {
 
 
                 {/* final bill */}
-                <View style={styles.rideCard}>
-                    <View style={styles.driverRow}>
-                        <View style={styles.infoBlock}>
-                            <View style={styles.rowBetween}>
-                                <Text style={styles.label}>Trip fare</Text>
-                                <Text style={styles.price}>₹ 210.00</Text>
-                            </View>
+                {booking && (
+  <View style={styles.rideCard}>
+    <View style={styles.driverRow}>
+      <View style={styles.infoBlock}>
+        <View style={styles.rowBetween}>
+          <Text style={styles.label}>Trip fare</Text>
+          <Text style={styles.price}>₹ {baseFare}</Text>
+        </View>
 
-                            <View style={styles.rowBetween}>
-                                <Text style={styles.label}>Loading / Unloading</Text>
-                                <Text style={styles.price}>₹ 200.00</Text>
-                            </View>
+        <View style={styles.rowBetween}>
+          <Text style={styles.label}>Loading / Unloading</Text>
+          <Text style={styles.price}>₹ {labourCharge}</Text>
+        </View>
 
-                            <View style={styles.rowBetween}>
-                                <Text style={styles.label}>Discount</Text>
-                                <Text style={styles.price}>₹ 20.00</Text>
-                            </View>
+        <View style={styles.rowBetween}>
+          <Text style={styles.label}>Discount</Text>
+          <Text style={styles.price}>₹ {discount}</Text>
+        </View>
 
-                            <View style={[styles.rowBetween, styles.totalRow]}>
-                                <Text style={styles.vehicleName}>Payable Amount</Text>
-                                <Text style={styles.price}>₹ 420.00</Text>
-                            </View>
-                        </View>
-                    </View>
-                </View>
+        <View style={[styles.rowBetween, styles.totalRow]}>
+          <Text style={styles.vehicleName}>Payable Amount</Text>
+          <Text style={styles.price}>₹ {payableAmount}</Text>
+        </View>
+      </View>
+    </View>
+  </View>
+)}
+
 
                 <View style={styles.content}>
                     <AppButton title="Pay Now" onPress={() => navigation.navigate('Booking5')} />
@@ -141,7 +204,7 @@ export default function Booking4({ navigation }) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-       backgroundColor: '#FFFF',
+        backgroundColor: '#FFFF',
     },
     infoBlock: {
         flex: 1,
@@ -204,7 +267,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         gap: 10,
         marginBottom: 16,
-        
+
     },
 
     termsText: {

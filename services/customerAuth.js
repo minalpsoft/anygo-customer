@@ -27,30 +27,41 @@ export const customerLoginApi = async (payload) => {
 
 
 export const customerRegisterApi = async (payload) => {
-  try {
-    const res = await axios.post(
-      `${API_BASE_URL}customer/register`,
-      payload
-    );
-    return res.data;
-  } catch (error) {
-    throw error.response?.data || error;
+  const res = await fetch(`${API_BASE_URL}customer/register`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw data;
   }
+
+  return data;
 };
 
-export const verifyCustomerOtpApi = async (payload) => {
-  try {
-    const res = await axios.post(
-      `${API_BASE_URL}auth/verify-otp`,
-      {
-        ...payload,
-        userType: 'customer', // 🔥 ONLY DIFFERENCE FROM DRIVER
-      }
-    );
-    return res.data;
-  } catch (error) {
-    throw error.response?.data || error;
+
+
+export const verifyOtpApi = async (payload) => {
+  const res = await fetch(`${API_BASE_URL}auth/verify-otp`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw data;
   }
+
+  return data;
 };
 
 

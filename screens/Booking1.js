@@ -5,67 +5,165 @@ import BottomTabs from '../components/BottomTabs';
 import AppHeader from '../components/AppHeader';
 import AppSearch from '../components/AppSearch';
 import AppButton from '../components/AppButton';
-import { routeCheckApi } from '../services/customerAuth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import MapView, { Marker } from 'react-native-maps';
 export default function Booking1({ navigation }) {
-    const [tripType, setTripType] = useState('CITY');
-   
-    const handleRouteCheck = async () => {
-  try {
-    const res = await routeCheckApi({
-      pickupLat,
-      pickupLng,
-      dropLat,
-      dropLng,
-    });
+  const [tripType, setTripType] = useState('CITY');
+  const [pickupText, setPickupText] = useState('');
+  const [dropText, setDropText] = useState('');
+  const [pickup, setPickup] = useState(null);
+  const [drop, setDrop] = useState(null);
 
-    navigation.navigate('Booking2', {
-      ...res,
-      pickup: { lat: pickupLat, lng: pickupLng },
-      drop: { lat: dropLat, lng: dropLng },
-      tripType,
-    });
-  } catch (err) {
-    console.log(err);
-    Alert.alert('Error', 'Route check failed');
-  }
-};
+  const API_BASE_URL = 'http://192.168.31.89:3000/';
+// const GOOGLE_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
+const GOOGLE_API_KEY='AIzaSyCe-FeBbj44cBU0lnDPbcL-w0fTKRp_HVo'
 
-
-    return (
-        <View style={styles.container}>
-            <ScrollView>
-
-                <AppHeader />
-
-                <AppSearch placeholder="Pickup location" />
-                <AppSearch placeholder="Drop location" />
-
-                {/* Trip Type */}
-                <View style={styles.tripTypeRow}>
-                    {['CITY', 'OUTSTATION'].map(type => (
-                        <TouchableOpacity
-                            key={type}
-                            style={[
-                                styles.tripBtn,
-                                tripType === type && styles.activeTrip,
-                            ]}
-                            onPress={() => setTripType(type)}
-                        >
-                            <Text style={styles.tripText}>{type}</Text>
-                        </TouchableOpacity>
-                    ))}
-                </View>
-
-                <View style={styles.content}>
-                    <AppButton title="Next" onPress={handleRouteCheck} />
-                </View>
-            </ScrollView>
-
-            <BottomTabs />
-        </View>
+  const getLatLngFromAddress = async (address) => {
+    const res = await fetch(
+      `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+        address
+      )}&key=${GOOGLE_API_KEY}`
     );
+
+    const data = await res.json();
+
+    if (!data.results?.length) {
+      throw new Error('Invalid address');
+    }
+
+    return data.results[0].geometry.location; // { lat, lng }
+  };
+
+  const handleRouteCheck = async () => {
+    try {
+      if (!pickupText || !dropText) {
+        Alert.alert('Error', 'Enter pickup & drop location');
+        return;
+      }
+
+      const pickupLoc = await getLatLngFromAddress(pickupText);
+      const dropLoc = await getLatLngFromAddress(dropText);
+
+      setPickup(pickupLoc);
+      setDrop(dropLoc);
+
+      const token = await AsyncStorage.getItem('token');
+
+      const res = await fetch(`${API_BASE_URL}booking/route-check`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          pickupLat: pickupLoc.lat,
+          pickupLng: pickupLoc.lng,
+          dropLat: dropLoc.lat,
+          dropLng: dropLoc.lng,
+        }),
+      });
+
+      const data = await res.json();
+
+      navigation.navigate('Booking2', {
+        pickup: pickupLoc,
+        drop: dropLoc,
+        distanceKm: data.distanceKm,
+        durationMin: data.durationMin,
+        tripType,
+        pickupText,
+        dropText,
+      });
+
+    } catch (err) {
+      console.log(err);
+      Alert.alert('Error', 'Route check failed');
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <ScrollView>
+
+        <AppHeader />
+
+        <AppSearch
+          placeholder="Pickup location"
+          value={pickupText}
+          onChangeText={setPickupText}
+        />
+
+        <AppSearch
+          placeholder="Drop location"
+          value={dropText}
+          onChangeText={setDropText}
+        />
+
+        <View style={styles.mapBox}>
+          <MapView
+            style={StyleSheet.absoluteFillObject}
+            region={
+              pickup
+                ? {
+                    latitude: pickup.lat,
+                    longitude: pickup.lng,
+                    latitudeDelta: 0.05,
+                    longitudeDelta: 0.05,
+                  }
+                : {
+                    latitude: 18.5204,
+                    longitude: 73.8567, // Pune default
+                    latitudeDelta: 0.1,
+                    longitudeDelta: 0.1,
+                  }
+            }
+          >
+            {pickup && (
+              <Marker
+                coordinate={{
+                  latitude: pickup.lat,
+                  longitude: pickup.lng,
+                }}
+                title="Pickup"
+              />
+            )}
+
+            {drop && (
+              <Marker
+                coordinate={{
+                  latitude: drop.lat,
+                  longitude: drop.lng,
+                }}
+                title="Drop"
+              />
+            )}
+          </MapView>
+        </View>
+
+        <View style={styles.tripTypeRow}>
+          {['CITY', 'OUTSTATION'].map(type => (
+            <TouchableOpacity
+              key={type}
+              style={[
+                styles.tripBtn,
+                tripType === type && styles.activeTrip,
+              ]}
+              onPress={() => setTripType(type)}
+            >
+              <Text style={styles.tripText}>{type}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <View style={styles.content}>
+          <AppButton title="Next" onPress={handleRouteCheck} />
+        </View>
+
+      </ScrollView>
+
+      <BottomTabs />
+    </View>
+  );
 }
 
 
@@ -97,5 +195,17 @@ const styles = StyleSheet.create({
     tripText: {
         color: '#fff',
         fontWeight: '600',
+    },
+    mapBox: {
+        height: 160,
+        backgroundColor: '#E0E0E0',
+        borderRadius: 16,
+        marginBottom: 16,
+        marginHorizontal: 16,
+        overflow: 'hidden',
+    },
+
+    mapContainer: {
+        flex: 1,
     },
 });

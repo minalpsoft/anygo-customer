@@ -1,12 +1,12 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     View,
     Text,
     StyleSheet,
-    TextInput,
     ScrollView,
-    TouchableOpacity, Image
+    Alert,Button
 } from 'react-native';
+
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../theme/colors';
 import BottomTabs from '../components/BottomTabs';
@@ -16,8 +16,84 @@ import MapView, { Marker } from 'react-native-maps';
 import AppInput from '../components/AppInput';
 import AppButton from '../components/AppButton';
 import RideCard from '../components/Card';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export default function Booking3({ navigation }) {
+export default function Booking3({ route, navigation }) {
+    const {
+        pickup,
+        drop,
+        distanceKm,
+        durationMin,
+        tripType,
+    } = route.params;
+
+    const [vehicles, setVehicles] = useState([]);
+    const [selectedVehicle, setSelectedVehicle] = useState(null);
+
+    const API_BASE_URL = 'http://192.168.31.89:3000/';
+
+    useEffect(() => {
+        getEstimate();
+    }, []);
+
+    const getEstimate = async () => {
+        const token = await AsyncStorage.getItem('token');
+
+        const res = await fetch(`${API_BASE_URL}booking/estimate`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+                pickupLat: pickup.lat,
+                pickupLng: pickup.lng,
+                dropLat: drop.lat,
+                dropLng: drop.lng,
+            }),
+        });
+
+        const data = await res.json();
+        setVehicles(data.vehicles || []);
+    };
+
+
+    const handleConfirmBooking = async () => {
+        if (!selectedVehicle) {
+            Alert.alert('Error', 'Please select a vehicle');
+            return;
+        }
+
+        try {
+            const token = await AsyncStorage.getItem('token');
+
+            const res = await fetch(`${API_BASE_URL}booking/create`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    vehicleType: selectedVehicle.vehicleType,
+                    pickupLat: pickup.lat,
+                    pickupLng: pickup.lng,
+                    dropLat: drop.lat,
+                    dropLng: drop.lng,
+                }),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) throw data;
+
+            navigation.navigate('Booking4', {
+                bookingId: data.bookingId,
+            });
+
+        } catch (err) {
+            Alert.alert('Booking Failed', err?.message || 'No drivers found');
+        }
+    };
 
 
 
@@ -29,45 +105,42 @@ export default function Booking3({ navigation }) {
                 <AppHeader />
 
                 {/* RIDE CARD */}
-                <RideCard>
-                    <View style={styles.driverRow}>
-                        <View style={styles.infoBlock}>
-                            <View style={styles.rowBetween}>
-                                <Text style={styles.vehicleName}>2 Wheeler</Text>
-                                <Text style={styles.price}>₹ 210.00</Text>
-                            </View>
-                            <Text style={styles.address}>20 Km · 3 Min away</Text>
+                {vehicles.map(v => (
+                    <RideCard
+                        key={v.vehicleType}
+                        style={[
+                            selectedVehicle?.vehicleType === v.vehicleType && {
+                                backgroundColor: 'green',
+                                borderWidth: 2,
+                            },
+                        ]}
+                    >
+                        <View style={styles.rowBetween}>
+                            <Text style={styles.vehicleName}>{v.vehicleType}</Text>
+                            <Text style={styles.price}>₹ {v.price}</Text>
                         </View>
-                    </View>
-                </RideCard>
 
-                <RideCard>
-                    <View style={styles.driverRow}>
-                        <View style={styles.infoBlock}>
-                            <View style={styles.rowBetween}>
-                                <Text style={styles.vehicleName}>Tempo</Text>
-                                <Text style={styles.price}>₹ 610.00</Text>
-                            </View>
-                            <Text style={styles.address}>1000 Km · 2 Min away</Text>
-                        </View>
-                    </View>
-                </RideCard>
+                        <Text style={styles.address}>
+                            {distanceKm} km · {v.etaMin} min away
+                        </Text>
 
-                <RideCard>
-                    <View style={styles.driverRow}>
-                        <View style={styles.infoBlock}>
-                            <View style={styles.rowBetween}>
-                                <Text style={styles.vehicleName}>Truck</Text>
-                                <Text style={styles.price}>₹ 1610.00</Text>
-                            </View>
-                            <Text style={styles.address}>5000 Km · 7 Min away</Text>
-                        </View>
-                    </View>
-                </RideCard>
+                        <AppButton
+                            title={
+                                selectedVehicle?.vehicleType === v.vehicleType
+                                    ? 'Selected'
+                                    : 'Select'
+                            }
+                            onPress={() => setSelectedVehicle(v)}
+                        />
+                    </RideCard>
+                ))}
+
+
 
                 <View style={styles.content}>
-                    <AppButton title="Next" onPress={() => navigation.navigate('Booking4')} />
+                    <AppButton title="Book Ride" onPress={handleConfirmBooking} />
                 </View>
+
 
 
 
@@ -82,7 +155,7 @@ export default function Booking3({ navigation }) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-      backgroundColor: '#FFFF',
+        backgroundColor: '#FFFF',
     },
     infoBlock: {
         flex: 1,
@@ -135,5 +208,21 @@ const styles = StyleSheet.create({
         marginTop: 8,
 
     },
+
+    button: {
+  backgroundColor: '#33ea85ff',
+  paddingVertical: 18,
+  borderRadius: 30,
+  alignItems: 'center',
+  marginTop: 10,
+  elevation: 4,
+},
+
+
+  text: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
 
 });
