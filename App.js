@@ -13,6 +13,7 @@ import Booking5 from './screens/Booking5';
 import CurrentTrip from './screens/CurrentTrip';
 import TripHistory from './screens/TripHistory';
 import Profile from './screens/Profile';
+import PaymentOptions from './screens/PaymentOptions';
 
 const Stack = createNativeStackNavigator();
 
@@ -34,6 +35,7 @@ export default function App() {
         <Stack.Screen name="CurrentTrip" component={CurrentTrip} />
         <Stack.Screen name="TripHistory" component={TripHistory} />
         <Stack.Screen name="Profile" component={Profile} />
+        <Stack.Screen name="PaymentOptions" component={PaymentOptions} />
 
         {/* APP FLOW */}
         {/* <Stack.Screen name="DriverDashboard" component={DrawerNavigator} /> */}

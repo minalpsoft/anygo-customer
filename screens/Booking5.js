@@ -15,10 +15,46 @@ import AppSearch from '../components/AppSearch';
 import MapView, { Marker } from 'react-native-maps';
 import RideCard from '../components/Card';
 import Divider from '../components/Divider';
-
+import { Polyline } from 'react-native-maps';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useState, useEffect } from 'react';
 
 export default function Booking5({ navigation }) {
+    const [driverLocation, setDriverLocation] = useState(null);
+    const [pickupLocation, setPickupLocation] = useState(null);
+    const [dropLocation, setDropLocation] = useState(null);
 
+    const API_BASE_URL = 'http://192.168.31.89:3000/';
+ useEffect(() => {
+        fetchCurrentTrip();
+
+        const interval = setInterval(fetchCurrentTrip, 5000); // every 5 sec
+        return () => clearInterval(interval);
+    }, []);
+
+    const fetchCurrentTrip = async () => {
+        try {
+            const token = await AsyncStorage.getItem('token');
+
+            const res = await fetch(
+                `${API_BASE_URL}booking/current/status`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            const data = await res.json();
+            if (!res.ok) return;
+
+            setDriverLocation(data.driverLocation);
+            setPickupLocation(data.pickupLocation);
+            setDropLocation(data.dropLocation);
+        } catch (err) {
+            console.log('LIVE TRIP ERROR', err);
+        }
+    };
 
 
     return (
@@ -27,7 +63,6 @@ export default function Booking5({ navigation }) {
 
                 {/* HEADER */}
                 <AppHeader />
-
 
                 {/* RIDE CARD */}
                 <RideCard>
@@ -74,6 +109,79 @@ export default function Booking5({ navigation }) {
                     </View>
                 </RideCard>
 
+                <View style={styles.mapBox}>
+                    <View style={styles.mapContainer}>
+                        <MapView
+                            style={StyleSheet.absoluteFillObject}
+                            region={{
+                                latitude: driverLocation?.lat || 19.0760,
+                                longitude: driverLocation?.lng || 72.8777,
+                                latitudeDelta: 0.05,
+                                longitudeDelta: 0.05,
+                            }}
+                        >
+                            {/* DRIVER MARKER */}
+                            {driverLocation && (
+                                <Marker
+                                    coordinate={{
+                                        latitude: driverLocation.lat,
+                                        longitude: driverLocation.lng,
+                                    }}
+                                    title="Driver"
+                                    pinColor="green"
+                                />
+                            )}
+
+                            {/* PICKUP MARKER */}
+                            {pickupLocation && (
+                                <Marker
+                                    coordinate={{
+                                        latitude: pickupLocation.lat,
+                                        longitude: pickupLocation.lng,
+                                    }}
+                                    title="Pickup"
+                                    pinColor="blue"
+                                />
+                            )}
+
+                            {/* DROP MARKER */}
+                            {dropLocation && (
+                                <Marker
+                                    coordinate={{
+                                        latitude: dropLocation.lat,
+                                        longitude: dropLocation.lng,
+                                    }}
+                                    title="Drop"
+                                    pinColor="red"
+                                />
+                            )}
+
+                            {/* ROUTE LINE */}
+                            {driverLocation && pickupLocation && (
+                                <Polyline
+                                    coordinates={[
+                                        {
+                                            latitude: driverLocation.lat,
+                                            longitude: driverLocation.lng,
+                                        },
+                                        {
+                                            latitude: pickupLocation.lat,
+                                            longitude: pickupLocation.lng,
+                                        },
+                                        {
+                                            latitude: dropLocation.lat,
+                                            longitude: dropLocation.lng,
+                                        },
+                                    ]}
+                                    strokeWidth={4}
+                                    strokeColor="blue"
+                                />
+                            )}
+                        </MapView>
+
+                    </View>
+                </View>
+
             </ScrollView>
             <BottomTabs />
         </View>
@@ -84,13 +192,11 @@ export default function Booking5({ navigation }) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-          backgroundColor: '#FFFF', 
+        backgroundColor: '#FFFF',
     },
 
-
-
-    mapBox: {
-        height: 160,
+   mapBox: {
+        height: 500,
         backgroundColor: '#E0E0E0',
         borderRadius: 16,
         marginBottom: 16,
@@ -101,8 +207,6 @@ const styles = StyleSheet.create({
     mapContainer: {
         flex: 1,
     },
-
-
 
     vehicleRow: {
         flexDirection: 'row',
@@ -206,7 +310,7 @@ const styles = StyleSheet.create({
     navText: {
         fontSize: 12,
         fontWeight: '600',
-         color:"white"
+        color: "white"
     },
     arrivalRow: {
         flexDirection: 'row',

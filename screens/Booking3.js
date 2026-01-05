@@ -4,7 +4,7 @@ import {
     Text,
     StyleSheet,
     ScrollView,
-    Alert,Button
+    Alert, Button
 } from 'react-native';
 
 import { Ionicons } from '@expo/vector-icons';
@@ -54,6 +54,7 @@ export default function Booking3({ route, navigation }) {
         });
 
         const data = await res.json();
+        console.log('ESTIMATE RESPONSE 👉', data);
         setVehicles(data.vehicles || []);
     };
 
@@ -87,7 +88,14 @@ export default function Booking3({ route, navigation }) {
             if (!res.ok) throw data;
 
             navigation.navigate('Booking4', {
-                bookingId: data.bookingId,
+                // bookingId: data.bookingId,
+                // vehicleType: selectedVehicle.vehicleType,
+                // estimatedFare: selectedVehicle.estimatedFare,
+                bookingId: data._id,
+                vehicleType: selectedVehicle.vehicleType,
+                estimatedFare: selectedVehicle.estimatedFare,
+                distanceKm,
+                durationMin,
             });
 
         } catch (err) {
@@ -117,7 +125,10 @@ export default function Booking3({ route, navigation }) {
                     >
                         <View style={styles.rowBetween}>
                             <Text style={styles.vehicleName}>{v.vehicleType}</Text>
-                            <Text style={styles.price}>₹ {v.price}</Text>
+                            <Text style={styles.price}>
+                                ₹ {v.estimatedFare ?? '—'}
+                            </Text>
+
                         </View>
 
                         <Text style={styles.address}>
@@ -138,7 +149,10 @@ export default function Booking3({ route, navigation }) {
 
 
                 <View style={styles.content}>
-                    <AppButton title="Book Ride" onPress={handleConfirmBooking} />
+                    <AppButton title="Book Ride"
+                        onPress={handleConfirmBooking}
+                    // onPress={() => navigation.navigate('Booking4')}
+                    />
                 </View>
 
 
@@ -210,19 +224,19 @@ const styles = StyleSheet.create({
     },
 
     button: {
-  backgroundColor: '#33ea85ff',
-  paddingVertical: 18,
-  borderRadius: 30,
-  alignItems: 'center',
-  marginTop: 10,
-  elevation: 4,
-},
+        backgroundColor: '#33ea85ff',
+        paddingVertical: 18,
+        borderRadius: 30,
+        alignItems: 'center',
+        marginTop: 10,
+        elevation: 4,
+    },
 
 
-  text: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
+    text: {
+        color: '#fff',
+        fontWeight: 'bold',
+        fontSize: 16,
+    },
 
 });

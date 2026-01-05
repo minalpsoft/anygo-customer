@@ -63,17 +63,17 @@ export default function BottomTabs() {
 
 
 const styles = StyleSheet.create({
- bottomTabs: {
-  flexDirection: 'row',
-  justifyContent: 'space-around',
-  paddingVertical: 15,
-  backgroundColor: '#FFFFFF',
-  elevation: 10,
-  shadowColor: '#000',
-  shadowOffset: { width: 0, height: -2 },
-  shadowOpacity: 0.08,
-  shadowRadius: 6,
-},
+  bottomTabs: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingVertical: 15,
+    backgroundColor: '#FFFFFF',
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+  },
 
 
   tabItem: {

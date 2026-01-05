@@ -18,9 +18,48 @@ import AppButton from '../components/AppButton';
 import Booking3 from './Booking3';
 import RideCard from '../components/Card';
 import Divider from '../components/Divider';
+import { Polyline } from 'react-native-maps';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useState, useEffect } from 'react';
 
 export default function CurrentTrip({ navigation }) {
 
+    const [driverLocation, setDriverLocation] = useState(null);
+    const [pickupLocation, setPickupLocation] = useState(null);
+    const [dropLocation, setDropLocation] = useState(null);
+
+    const API_BASE_URL = 'http://192.168.31.89:3000/';
+
+    useEffect(() => {
+        fetchCurrentTrip();
+
+        const interval = setInterval(fetchCurrentTrip, 5000); // every 5 sec
+        return () => clearInterval(interval);
+    }, []);
+
+    const fetchCurrentTrip = async () => {
+        try {
+            const token = await AsyncStorage.getItem('token');
+
+            const res = await fetch(
+                `${API_BASE_URL}booking/current/status`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            const data = await res.json();
+            if (!res.ok) return;
+
+            setDriverLocation(data.driverLocation);
+            setPickupLocation(data.pickupLocation);
+            setDropLocation(data.dropLocation);
+        } catch (err) {
+            console.log('LIVE TRIP ERROR', err);
+        }
+    };
 
 
     return (
@@ -30,21 +69,6 @@ export default function CurrentTrip({ navigation }) {
                 {/* HEADER */}
                 <AppHeader />
 
-
-               <View style={styles.mapBox}>
-
-                    <View style={styles.mapContainer}>
-                        <MapView
-                            style={StyleSheet.absoluteFillObject}
-                            initialRegion={{
-                                latitude: 19.0760,
-                                longitude: 72.8777,
-                                latitudeDelta: 0.05,
-                                longitudeDelta: 0.05,
-                            }}
-                        />
-                    </View>
-                </View>
 
                 {/* driver card */}
                 <RideCard>
@@ -90,6 +114,25 @@ export default function CurrentTrip({ navigation }) {
                     </View>
                 </RideCard>
 
+                <View style={styles.completeContainer}>
+                    <View style={styles.tickCircle}>
+                        <Ionicons name="checkmark" size={48} color="#fff" />
+                    </View>
+
+                    <Text style={styles.completeTitle}>Trip Completed</Text>
+                    <Text style={styles.completeSubtitle}>
+                        Your trip has been completed successfully!
+                    </Text>
+                </View>
+
+
+                <View style={styles.content}>
+                <View style={styles.content1}>
+
+                    <AppButton title="Make Payment" onPress={() => navigation.navigate('PaymentOptions')} />
+                    </View>
+                </View>
+
             </ScrollView>
             <BottomTabs />
         </View>
@@ -106,6 +149,9 @@ const styles = StyleSheet.create({
 
     content: {
         paddingHorizontal: 16,
+    },
+    content1:{
+        marginTop:"15"
     },
     mapBox: {
         height: 500,
@@ -233,6 +279,36 @@ const styles = StyleSheet.create({
         marginTop: 10
     },
 
+    completeContainer: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: 40,
+        paddingHorizontal: 20,
+    },
+
+    tickCircle: {
+        width: 90,
+        height: 90,
+        borderRadius: 45,
+        backgroundColor: '#2ECC71', // green success color
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 20,
+        elevation: 4,
+    },
+
+    completeTitle: {
+        fontSize: 20,
+        fontWeight: '700',
+        color: '#222',
+        marginBottom: 6,
+    },
+
+    completeSubtitle: {
+        fontSize: 14,
+        color: '#777',
+        textAlign: 'center',
+    },
 
 
 });

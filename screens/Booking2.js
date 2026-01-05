@@ -77,11 +77,20 @@ export default function Booking2({ route, navigation }) {
         </View>
 
         {/* INFO */}
-        <View style={styles.content}>
-          <Text>Distance: {distanceKm} km</Text>
-          <Text>Duration: {durationMin} min</Text>
+        <View style={styles.infoCard}>
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>Distance</Text>
+            <Text style={styles.value}>{distanceKm} km</Text>
+          </View>
 
+          {/* <View style={styles.divider} /> */}
+
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>Duration</Text>
+            <Text style={styles.value}>{durationMin} min</Text>
+          </View>
         </View>
+
 
         <View style={styles.content}>
           <AppInput placeholder="Receiver Name" />
@@ -120,6 +129,42 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFF',
   },
 
+  infoCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginHorizontal: 16,
+    marginTop: 12,
+    elevation: 3, // Android shadow
+    shadowColor: '#000', // iOS shadow
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    marginBottom: 20
+  },
+
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+
+  label: {
+    fontSize: 14,
+    color: '#0a0a0aff',
+  },
+
+  value: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#000',
+  },
+
+  divider: {
+    height: 1,
+    backgroundColor: '#eee',
+    marginVertical: 10,
+  },
 
   content: {
     paddingHorizontal: 16,
