@@ -77,7 +77,7 @@ const handleLogin = async () => {
       style={styles.container}
     >
 
-      {/* <AppLogo /> */}
+      <AppLogo />
 
       <Text style={styles.title}>Customer Login</Text>
 

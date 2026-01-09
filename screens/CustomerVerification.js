@@ -5,13 +5,14 @@ import AppInput from '../components/AppInput';
 import AppButton from '../components/AppButton';
 import { COLORS } from '../theme/colors';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { useState } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { verifyOtpApi } from '../services/customerAuth';
 
 export default function CustomerVerification() {
   const navigation = useNavigation();
+  const route = useRoute();
+
+  const mobile = route.params?.mobile; // ✅ GET MOBILE HERE
 
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
@@ -24,21 +25,17 @@ export default function CustomerVerification() {
       return;
     }
 
+    if (!mobile) {
+      Alert.alert('Error', 'Mobile number missing. Please register again.');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const mobile = await AsyncStorage.getItem('otp_mobile');
-
-      if (!mobile) {
-        Alert.alert('Error', 'Mobile number missing. Please register again.');
-        return;
-      }
-
       const res = await fetch(`${API_BASE_URL}auth/verify-otp`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           mobile,
           otp,
@@ -49,80 +46,47 @@ export default function CustomerVerification() {
       const data = await res.json();
       console.log('OTP VERIFY RESPONSE 👉', data);
 
-      if (!res.ok) {
-        throw data;
-      }
+      if (!res.ok) throw data;
 
-      if (data?.message === 'OTP verified successfully') {
-        await AsyncStorage.multiRemove(['otp_mobile', 'otp_userType']);
-
-        Alert.alert('Success', 'Account created successfully', [
-          {
-            text: 'OK',
-            onPress: () => navigation.replace('Login'),
-          },
-        ]);
-      } else {
-        Alert.alert('Failed', 'Invalid OTP');
-      }
-
-
+      Alert.alert('Success', 'Account created successfully', [
+        {
+          text: 'OK',
+          onPress: () => navigation.replace('Login'),
+        },
+      ]);
     } catch (err) {
-      console.log('OTP VERIFY ERROR 👉', err);
       Alert.alert('Error', err?.message || 'OTP verification failed');
     } finally {
       setLoading(false);
     }
   };
 
-
-
-
   return (
-    <LinearGradient
-      colors={['#ffffff', '#f2f6ff']}
-      style={styles.container}
-    >
-
-      <View style={styles.backContainer}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back-outline" size={28} color="#000" />
-        </TouchableOpacity>
-      </View>
-
-      <AppLogo />
-
-      <Text style={styles.title}>Customer Verification</Text>
+    <View style={styles.container}>
+      <Text style={styles.title}>Verify OTP</Text>
 
       <AppInput
         placeholder="Enter OTP"
-        keyboardType="number-pad"
-        maxLength={6}
+        keyboardType="numeric"
         value={otp}
         onChangeText={setOtp}
       />
 
       <AppButton
-        title={loading ? 'Verifying...' : 'Finish'}
+        title={loading ? 'Verifying...' : 'Verify OTP'}
         onPress={handleVerifyOtp}
         disabled={loading}
       />
-
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  backContainer: {
-    position: 'absolute',
-    top: 50,
-    left: 20,
-    zIndex: 10,
-  },
   container: {
     flex: 1,
     backgroundColor: '#F7F9FC',
     padding: 20,
+    justifyContent: 'center',
   },
   title: {
     fontSize: 26,

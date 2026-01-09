@@ -23,50 +23,6 @@ export default function CreateAccount() {
   const [loading, setLoading] = useState(false);
 const API_BASE_URL = 'http://192.168.31.89:3000/';
 
-const handleRegister = async () => {
-  if (!firstName || !lastName || !mobile || !email || !password) {
-    Alert.alert('Error', 'All fields are required');
-    return;
-  }
-
-  if (!accepted) {
-    Alert.alert('Error', 'Please accept Terms & Conditions');
-    return;
-  }
-
-  setLoading(true);
-
-  try {
-  const res = await fetch(`${API_BASE_URL}customer/register`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      firstName,
-      lastName,
-      mobile,
-      email,
-      password,
-      acceptedTerms: accepted,
-    }),
-  });
-
-  const data = await res.json();
-  console.log('FETCH RESPONSE 👉', data);
-// navigation.navigate('CustomerVerification');
-if (data?.otpRequired) {
-  await AsyncStorage.setItem('otp_mobile', mobile);
-  await AsyncStorage.setItem('otp_userType', 'customer');
-
-  navigation.navigate('CustomerVerification');
-}
-} catch (e) {
-  console.log('FETCH ERROR 👉', e);
-}
-
-};
-
 // const handleRegister = async () => {
 //   if (!firstName || !lastName || !mobile || !email || !password) {
 //     Alert.alert('Error', 'All fields are required');
@@ -81,37 +37,108 @@ if (data?.otpRequired) {
 //   setLoading(true);
 
 //   try {
-//     const res = await customerRegisterApi({
+//   const res = await fetch(`${API_BASE_URL}customer/register`, {
+//     method: 'POST',
+//     headers: {
+//       'Content-Type': 'application/json',
+//     },
+//     body: JSON.stringify({
 //       firstName,
 //       lastName,
 //       mobile,
 //       email,
 //       password,
 //       acceptedTerms: accepted,
-//     });
+//     }),
+//   });
 
-//     console.log('REGISTER RESPONSE 👉', res);
+//   const data = await res.json();
+//   console.log('FETCH RESPONSE 👉', data);
+// // navigation.navigate('CustomerVerification');
+// // if (data?.otpRequired) {
+// //   await AsyncStorage.setItem('otp_mobile', mobile);
+// //   await AsyncStorage.setItem('otp_userType', 'customer');
 
-//     // ✅ Save data for OTP screen
-//     await AsyncStorage.setItem('otp_mobile', mobile);
-//     await AsyncStorage.setItem('otp_userType', 'customer');
+// //   // navigation.navigate('CustomerVerification');
+// //   navigation.reset({
+// //   index: 0,
+// //   routes: [{ name: 'CustomerVerification' }],
+// // });
 
-//     // ✅ Navigate ALWAYS on success
-//     Alert.alert('OTP', res.message);
+// // }
+// console.log('FULL DATA 👉', data);
 
-    
+// Alert.alert( 'OTP API success, navigating now');
 
-//   } catch (err) {
-//     console.log('REGISTER FAILED 👉', err);
+// navigation.reset({
+//   index: 0,
+//   routes: [{ name: 'CustomerVerification' }],
+//   // params: { mobile },
+// });
 
-//     Alert.alert(
-//       'Registration Failed',
-//       err.message || 'Something went wrong'
-//     );
-//   } finally {
-//     setLoading(false);
-//   }
+// } catch (e) {
+//   console.log('FETCH ERROR 👉', e);
+// }
+
 // };
+
+const handleRegister = async () => {
+  if (!firstName || !lastName || !mobile || !email || !password) {
+    Alert.alert('Error', 'All fields are required');
+    return;
+  }
+
+  if (!accepted) {
+    Alert.alert('Error', 'Please accept Terms & Conditions');
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    const res = await fetch(`${API_BASE_URL}customer/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        firstName,
+        lastName,
+        mobile,
+        email,
+        password,
+        acceptedTerms: accepted,
+      }),
+    });
+
+    const data = await res.json();
+    console.log('REGISTER RESPONSE 👉', data);
+
+    // ✅ SAVE MOBILE HERE
+    await AsyncStorage.setItem('otp_mobile', mobile);
+    
+const test = await AsyncStorage.getItem('otp_mobile');
+console.log('STORAGE TEST 👉', test);
+
+    await AsyncStorage.setItem('otp_userType', 'customer');
+
+   navigation.reset({
+  index: 0,
+  routes: [
+    {
+      name: 'CustomerVerification',
+      params: { mobile },
+    },
+  ],
+});
+
+
+  } catch (e) {
+    console.log('FETCH ERROR 👉', e);
+    Alert.alert('Error', 'Registration failed');
+  } finally {
+    setLoading(false);
+  }
+};
+
 
     return (
         <LinearGradient
@@ -133,7 +160,7 @@ if (data?.otpRequired) {
       <AppInput placeholder="Enter Last Name" value={lastName} onChangeText={setLastName} />
       <AppInput placeholder="Enter Mobile Number" keyboardType="number-pad" value={mobile} onChangeText={setMobile} />
       <AppInput placeholder="Enter Email" keyboardType="email-address" value={email} onChangeText={setEmail} />
-      <AppInput placeholder="Enter Password" value={password} onChangeText={setPassword} />
+      <AppInput placeholder="Enter Password" secureTextEntry value={password} onChangeText={setPassword} />
 
       <View style={styles.checkboxContainer}>
         <Checkbox
