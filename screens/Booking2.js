@@ -36,6 +36,8 @@ export default function Booking2({ route, navigation }) {
         pickupLng: pickup.lng,
         dropLat: drop.lat,
         dropLng: drop.lng,
+        receiverName: receiverName || undefined,
+        receiverMobile: receiverMobile || undefined,
       }),
     });
 

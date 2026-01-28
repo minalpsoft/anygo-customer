@@ -26,6 +26,7 @@ export default function Booking5({ route, navigation }) {
     const [loading, setLoading] = useState(true);
     const pollingRef = useRef(null);
     const isFocused = useIsFocused();
+    const [finalAmount, setFinalAmount] = useState(null);
 
     const {
         bookingId,
@@ -71,13 +72,6 @@ export default function Booking5({ route, navigation }) {
         );
     }, [driverLocation, routePoints]);
 
-    const formatDuration = (min) => {
-        if (!min) return '--';
-        const h = Math.floor(min / 60);
-        const m = min % 60;
-        return h ? `${h}h ${m}m` : `${m} min`;
-    };
-
     useEffect(() => {
         fetchCurrentTrip();
 
@@ -107,11 +101,18 @@ export default function Booking5({ route, navigation }) {
                 return;
             }
 
-            console.log('LIVE TRIP DATA FULL', data);
-
+            // console.log('LIVE TRIP DATA FULL', data);
+            console.log('📦 backend status:', data.status);
+            console.log('💰 backend finalFare:', data.finalFare);
+            console.log('🚦 frontend finalAmount:', finalAmount);
             // ✅ STATUS
             setTripStatus(data.status);
             setTrip(data);
+
+            // ✅ ADD THIS BLOCK RIGHT HERE 👇👇👇
+            if (data.finalFare !== undefined && data.finalFare !== null) {
+                setFinalAmount(Number(data.finalFare));
+            }
 
             // ✅ DRIVER LOCATION
             if (data.lastDriverLocation?.lat && data.lastDriverLocation?.lng) {
@@ -176,11 +177,6 @@ export default function Booking5({ route, navigation }) {
     }, [routePoints]);
 
 
-    useEffect(() => {
-        console.log('ROUTE POINTS', routePoints);
-    }, [routePoints]);
-
-
     const hasNavigated = useRef(false);
 
     useEffect(() => {
@@ -207,11 +203,11 @@ export default function Booking5({ route, navigation }) {
                                     index: 0,
                                     routes: [
                                         {
-                                            name: 'Booking4',
+                                            name: 'PaymentOptions',
                                             params: {
                                                 bookingId,
                                                 vehicleType: trip?.vehicleType ?? vehicleType,
-                                                estimatedFare: trip?.estimatedFare ?? estimatedFare,
+                                                finalPayableAmount: finalAmount,
                                                 distanceKm: trip?.distanceKm ?? distanceKm,
                                                 durationMin: trip?.durationMin ?? durationMin,
                                             },
@@ -229,11 +225,9 @@ export default function Booking5({ route, navigation }) {
     }, [tripStatus, isFocused]);
 
 
-
     useEffect(() => {
         console.log('🔥 CURRENT tripStatus:', tripStatus);
     }, [tripStatus]);
-
 
     return (
         <View style={styles.container}>
@@ -277,13 +271,13 @@ export default function Booking5({ route, navigation }) {
 
                                 {/* DRIVER */}
                                 {driverLocation && (
-                                    <Marker coordinate={driverLocation}>
-                                        <Image
-                                            source={require('../assets/carimg1.png')}
-                                            style={{ width: 40, height: 40 }}
-                                        />
-                                    </Marker>
+                                    <Marker
+                                        coordinate={driverLocation}
+                                        title="Driver"
+                                        pinColor="blue"
+                                    />
                                 )}
+
 
 
                                 {/* PICKUP */}
@@ -328,47 +322,11 @@ export default function Booking5({ route, navigation }) {
                                     />
                                 )}
 
-
                             </MapView>
                         )}
 
-
-
-
                     </View>
                 </View>
-
-                {/* {tripStatus === 'TRIP_COMPLETED' && ( */}
-                <View style={{ padding: 20, alignItems: 'center' }}>
-                    {/* <Text style={{ fontSize: 18, fontWeight: '600' }}>
-                                        Trip Completed 🎉
-                                    </Text> */}
-
-                    {/* <TouchableOpacity
-                        style={{
-                            marginTop: 15,
-                            backgroundColor: '#1E90FF',
-                            paddingVertical: 12,
-                            paddingHorizontal: 30,
-                            borderRadius: 8,
-                        }}
-                        // onPress={() => navigation.replace('Booking4')}
-                        onPress={() =>
-                            navigation.replace('Booking4', {
-                                bookingId,
-                                vehicleType: trip?.vehicleType ?? vehicleType,
-                                estimatedFare: trip?.estimatedFare ?? estimatedFare,
-                                distanceKm: trip?.distanceKm ?? distanceKm,
-                                durationMin: trip?.durationMin ?? durationMin,
-                            })
-                        }
-                    >
-                        <Text style={{ color: '#fff', fontSize: 16 }}>
-                            Proceed to Payment
-                        </Text>
-                    </TouchableOpacity> */}
-                </View>
-                {/* )} */}
 
             </ScrollView>
             <BottomTabs />
@@ -384,7 +342,7 @@ const styles = StyleSheet.create({
     },
 
     mapBox: {
-        height: 500,
+        height: 700,
         backgroundColor: '#E0E0E0',
         borderRadius: 16,
         marginBottom: 16,

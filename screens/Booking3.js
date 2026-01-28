@@ -26,6 +26,8 @@ export default function Booking3({ route, navigation }) {
         distanceKm,
         durationMin,
         tripType,
+        receiverName,
+  receiverMobile,
     } = route.params;
 
     const [vehicles, setVehicles] = useState([]);
@@ -53,6 +55,8 @@ export default function Booking3({ route, navigation }) {
                     pickupLng: pickup.lng,
                     dropLat: drop.lat,
                     dropLng: drop.lng,
+                    receiverName: receiverName || undefined,
+                    receiverMobile: receiverMobile || undefined,
                 }),
             });
 
@@ -81,79 +85,50 @@ export default function Booking3({ route, navigation }) {
         }
     };
 
+    //     const handleConfirmBooking = async () => {
+    //         if (!selectedVehicle) {
+    //             Alert.alert('Error', 'Please select a vehicle');
+    //             return;
+    //         }
 
-    // const handleConfirmBooking = async () => {
-    //     if (!selectedVehicle) {
-    //         Alert.alert('Error', 'Please select a vehicle');
-    //         return;
-    //     }
+    //         const token = await AsyncStorage.getItem('token');
 
-    //     const token = await AsyncStorage.getItem('token');
+    //         const res = await fetch(`${API_BASE_URL}booking/create`, {
+    //             method: 'POST',
+    //             headers: {
+    //                 'Content-Type': 'application/json',
+    //                 Authorization: `Bearer ${token}`,
+    //             },
+    //             body: JSON.stringify({
+    //                 vehicleType: selectedVehicle.vehicleType,
+    //                 pickupLat: pickup.lat,
+    //                 pickupLng: pickup.lng,
+    //                 dropLat: drop.lat,
+    //                 dropLng: drop.lng,
+    //             }),
+    //         });
 
-    //     const res = await fetch(`${API_BASE_URL}booking/create`, {
-    //         method: 'POST',
-    //         headers: {
-    //             'Content-Type': 'application/json',
-    //             Authorization: `Bearer ${token}`,
-    //         },
-    //         body: JSON.stringify({
-    //             vehicleType: selectedVehicle.vehicleType,
-    //             pickupLat: pickup.lat,
-    //             pickupLng: pickup.lng,
-    //             dropLat: drop.lat,
-    //             dropLng: drop.lng,
-    //         }),
-    //     });
+    //         const data = await res.json();
 
-    //     const data = await res.json();
+    //         // navigation.replace('SearchingDriver', {
+    //         //     bookingId: data.bookingId || data._id,
+    //         //     vehicleType: selectedVehicle.vehicleType,
+    //         //     estimatedFare: selectedVehicle.estimatedFare,
+    //         //     distanceKm,
+    //         //     durationMin,
+    //         // });
 
-    //     // ALWAYS go to searching screen
-    //     navigation.replace('SearchingDriver', {
-    //         bookingId: data.bookingId || data._id,
-    //     });
-    // };
+    //        navigation.replace('Booking4', {
+    //   bookingId: data.bookingId || data._id,
 
-    const handleConfirmBooking = async () => {
-        if (!selectedVehicle) {
-            Alert.alert('Error', 'Please select a vehicle');
-            return;
-        }
+    //   // dynamic values for UI
+    //   vehicleType: selectedVehicle.vehicleType,
+    //   estimatedFare: selectedVehicle.estimatedFare,
+    //   distanceKm,
+    //   durationMin,
+    // });
 
-        const token = await AsyncStorage.getItem('token');
-
-        const res = await fetch(`${API_BASE_URL}booking/create`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-                vehicleType: selectedVehicle.vehicleType,
-                pickupLat: pickup.lat,
-                pickupLng: pickup.lng,
-                dropLat: drop.lat,
-                dropLng: drop.lng,
-            }),
-        });
-
-        const data = await res.json();
-
-        navigation.replace('SearchingDriver', {
-            bookingId: data.bookingId || data._id,
-            vehicleType: selectedVehicle.vehicleType,
-            estimatedFare: selectedVehicle.estimatedFare,
-            distanceKm,
-            durationMin,
-        });
-
-        // navigation.replace('Booking5', {
-        //     bookingId: data.bookingId || data._id,
-        //     vehicleType: selectedVehicle.vehicleType,
-        //     estimatedFare: selectedVehicle.estimatedFare,
-        //     distanceKm,
-        //     durationMin,
-        // });
-    };
+    //     };
 
 
     return (
@@ -187,15 +162,6 @@ export default function Booking3({ route, navigation }) {
 
                         </Text>
 
-                        {/* <AppButton
-                            title={
-                                selectedVehicle?.vehicleType === v.vehicleType
-                                    ? 'Selected'
-                                    : 'Select'
-                            }
-                            onPress={() => setSelectedVehicle(v)}
-                        /> */}
-
                         <AppButton
                             title={
                                 selectedVehicle?.vehicleType === v.vehicleType
@@ -217,10 +183,33 @@ export default function Booking3({ route, navigation }) {
 
 
                 <View style={styles.content}>
-                    <AppButton title="Book Ride"
+                    {/* <AppButton title="Book Ride"
                         onPress={handleConfirmBooking}
                     // onPress={() => navigation.navigate('Booking4')}
+                    /> */}
+
+                    <AppButton
+                        title="Next"
+                        onPress={() => {
+                            if (!selectedVehicle) {
+                                Alert.alert('Error', 'Please select a vehicle');
+                                return;
+                            }
+
+                            navigation.replace('Booking4', {
+                                vehicleType: selectedVehicle.vehicleType,
+                                baseFare: selectedVehicle.estimatedFare,
+                                distanceKm,
+                                durationMin,
+                                isLoadingAvailable: selectedVehicle.isLoadingAvailable,
+                                loadingChargePerLabour: selectedVehicle.loadingChargePerLabour,
+                                pickup,
+                                drop,
+                            });
+
+                        }}
                     />
+
                 </View>
 
 

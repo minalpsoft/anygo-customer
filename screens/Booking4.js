@@ -19,14 +19,19 @@ import Divider from '../components/Divider';
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
 export default function Booking4({ route, navigation }) {
-    // const { amount } = route.params;
+
+    const {
+        receiverName,
+        receiverMobile,
+    } = route.params || {};
+
     const amount = route?.params?.amount ?? 0;
     const bookingId = route?.params?.bookingId;
 
 
     // const route = useRoute();
     const selectedVehicle = route.params?.vehicleType;
-    const selectedFare = route.params?.estimatedFare;
+    const selectedFare = route.params?.baseFare;
     const selectedDistance = route?.params?.distanceKm;
     const selectedDuration = route?.params?.durationMin;
     const [accepted, setAccepted] = useState(false);
@@ -34,6 +39,70 @@ export default function Booking4({ route, navigation }) {
     const [coupon, setCoupon] = useState('');
     const [booking, setBooking] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [vehiclePricing, setVehiclePricing] = useState(null);
+
+    const isLoadingAvailable = vehiclePricing?.isLoadingAvailable ?? false;
+
+    const labourRate = vehiclePricing?.loadingChargePerLabour ?? 0;
+
+    const finalLabourCharge =
+        accepted && isLoadingAvailable
+            ? labourCount * labourRate
+            : 0;
+
+    const finalBaseFare = selectedFare ?? 0;
+    const finalDiscount = 0;
+
+    const finalPayableAmount =
+        finalBaseFare + finalLabourCharge - finalDiscount;
+
+
+    useEffect(() => {
+        if (vehiclePricing) {
+            console.log('🚚 Vehicle pricing:', vehiclePricing);
+        }
+    }, [vehiclePricing]);
+
+    const fetchVehiclePricing = async () => {
+        try {
+            const token = await AsyncStorage.getItem('token');
+
+            console.log('🚘 Fetching pricing for:', selectedVehicle);
+            console.log('🔐 Token exists:', !!token);
+
+            const res = await fetch(
+                `${API_BASE_URL}booking/vehicle-pricing?vehicleType=${selectedVehicle}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            const data = await res.json();
+            console.log('📦 Pricing API response:', data);
+
+            if (!res.ok) {
+                throw data;
+            }
+
+            setVehiclePricing(Array.isArray(data) ? data[0] : data);
+        } catch (err) {
+            console.log('❌ Pricing error:', err);
+            Alert.alert('Error', 'Failed to load vehicle pricing');
+        }
+    };
+
+
+    useEffect(() => {
+        if (!selectedVehicle) {
+            console.log('⏳ Waiting for vehicleType...');
+            return;
+        }
+
+        fetchVehiclePricing();
+    }, [selectedVehicle]);
+
 
     const resolvedBooking = booking ?? {
         vehicleType: selectedVehicle,
@@ -44,21 +113,61 @@ export default function Booking4({ route, navigation }) {
         discount: 0,
     };
 
-    const finalBaseFare =
-        booking?.finalFare ??
-        booking?.estimatedFare ??
-        selectedFare ??
-        0;
+    const handleBookRide = async () => {
+        try {
+            const token = await AsyncStorage.getItem('token');
 
-    const finalLabourCharge =
-        booking?.loadingCharge ?? 0;
+            console.log('🚖 Booking payload:', {
+                vehicleType: selectedVehicle,
+                pickup: route.params?.pickup,
+                drop: route.params?.drop,
+                labourCount: accepted ? labourCount : 0,
+            });
 
-    const finalDiscount =
-        booking?.discount ?? 0;
+            if (!route.params?.pickup || !route.params?.drop) {
+                Alert.alert('Error', 'Pickup or Drop location missing');
+                return;
+            }
 
-    const finalPayableAmount =
-        booking?.finalFare ??
-        finalBaseFare + finalLabourCharge - finalDiscount;
+            const res = await fetch(`${API_BASE_URL}booking/create`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    vehicleType: selectedVehicle,
+                    pickupLat: route.params.pickup.lat,
+                    pickupLng: route.params.pickup.lng,
+                    dropLat: route.params.drop.lat,
+                    dropLng: route.params.drop.lng,
+                    loadingRequired: accepted,
+                    labourCount: accepted ? labourCount : 0,
+                    receiverName: receiverName || undefined,
+                    receiverMobile: receiverMobile || undefined,
+               paymentMethod: 'CASH', 
+                }),
+            });
+
+            const data = await res.json();
+
+            console.log('📦 Booking API response:', data);
+
+            if (!res.ok) {
+                Alert.alert('Error', data.message || 'Failed to book ride');
+                return;
+            }
+
+            navigation.replace('SearchingDriver', {
+                bookingId: data.bookingId || data._id,
+            });
+
+        } catch (e) {
+            console.log('❌ Booking exception:', e);
+            Alert.alert('Error', 'Something went wrong');
+        }
+    };
+
 
 
     useEffect(() => {
@@ -149,13 +258,15 @@ export default function Booking4({ route, navigation }) {
                     >
                         <Checkbox
                             value={accepted}
+                            disabled={!vehiclePricing || !isLoadingAvailable}
                             onValueChange={setAccepted}
-                            color={accepted ? COLORS.primary : undefined}
                         />
 
-                        <Text style={styles.termsText}>
-                            Loading / Unloading required
+
+                        <Text style={{ color: 'gray' }}>
+                            Loading / Unloading not available for this vehicle
                         </Text>
+
                     </TouchableOpacity>
                 </View>
 
@@ -227,17 +338,11 @@ export default function Booking4({ route, navigation }) {
 
 
                 <View style={styles.content}>
-                    {/* <AppButton title="Next" onPress={() => navigation.navigate('PaymentOptions')} /> */}
                     <AppButton
-                        title="Next"
-                        onPress={() =>
-                            navigation.navigate('PaymentOptions', {
-                                // amount: payableAmount,
-                                amount: finalPayableAmount,
-                                bookingId,
-                            })
-                        }
+                        title="Book Ride"
+                        onPress={handleBookRide}
                     />
+
 
                 </View>
 

@@ -44,10 +44,6 @@ export default function SearchingDriver({ route, navigation }) {
             );
 
             const data = await res.json();
-            console.log('📡 BOOKING STATUS:', data.status);
-            console.log('🆔 SCREEN bookingId:', bookingId);
-            console.log('🆔 API bookingId:', data?._id);
-            console.log('📡 BOOKING STATUS:', data?.status);
 
             // ✅ DRIVER ACCEPTED
             if (data.status === 'DRIVER_ACCEPTED' ||

@@ -5,7 +5,7 @@ export default function RazorpayWeb({ route, navigation }) {
   const amount = route?.params?.amount ?? 1;
   const bookingId = route?.params?.bookingId ?? null;
 
-  const finalAmount = Number(amount) * 100;
+  const finalFare = Number(amount) * 100;
 
   const html = `
     <!DOCTYPE html>
@@ -21,7 +21,7 @@ export default function RazorpayWeb({ route, navigation }) {
           function openRazorpay() {
             var options = {
               key: "rzp_test_RyWXVtaCyps0zs",
-              amount: ${finalAmount},
+              amount: ${finalFare},
               currency: "INR",
               name: "AnyGo",
               description: "Ride Payment",
