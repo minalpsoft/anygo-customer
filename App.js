@@ -18,6 +18,8 @@ import BookingSuccess from './screens/BookingSuccess';
 import PaymentGateway from './screens/PaymentGateway';
 import RazorpayWeb from './screens/RazorpayWeb';
 import SearchingDriver from './screens/SearchingDriver';
+import ForgotPassword from './screens/ForgotPassword';
+import ResetPassword from './screens/ResetPassword';
 
 const Stack = createNativeStackNavigator();
 
@@ -44,6 +46,8 @@ export default function App() {
         <Stack.Screen name="PaymentGateway" component={PaymentGateway} />
         <Stack.Screen name="RazorpayWeb" component={RazorpayWeb} />
         <Stack.Screen name="SearchingDriver" component={SearchingDriver} />
+        <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
+        <Stack.Screen name="ResetPassword" component={ResetPassword} />
 
         {/* APP FLOW */}
         {/* <Stack.Screen name="DriverDashboard" component={DrawerNavigator} /> */}
