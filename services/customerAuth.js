@@ -145,3 +145,27 @@ export const getAddressFromLatLng = async (lat, lng) => {
     return 'Location not available';
   }
 };
+
+export const deleteCustomerAccountApi = async () => {
+  const token = await AsyncStorage.getItem('token');
+
+  if (!token) {
+    throw new Error('Session expired. Please login again.');
+  }
+
+  const res = await fetch(`${API_BASE_URL}customer/delete-account`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw new Error(data.message || 'Failed to delete account');
+  }
+
+  return data;
+};

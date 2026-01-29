@@ -22,6 +22,7 @@ import {
 } from '../services/customerAuth';
 import axios from 'axios';
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+import { deleteCustomerAccountApi } from '../services/customerAuth';
 
 export default function Profile({ navigation }) {
     const [profile, setProfile] = useState(null);
@@ -104,6 +105,47 @@ export default function Profile({ navigation }) {
         );
     }
 
+    const handleDeleteAccount = () => {
+        Alert.alert(
+            'Delete Account',
+            'This action is permanent. Your account will be deleted forever. Are you sure?',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Delete',
+                    style: 'destructive',
+                    onPress: confirmDeleteAccount,
+                },
+            ],
+        );
+    };
+
+    const confirmDeleteAccount = async () => {
+        try {
+            const res = await deleteCustomerAccountApi();
+
+            Alert.alert('Account Deleted', res.message);
+
+            await AsyncStorage.multiRemove([
+                'token',
+                'customer',
+                'otp_mobile',
+            ]);
+
+            navigation.reset({
+                index: 0,
+                routes: [{ name: 'Login' }],
+            });
+
+        } catch (err) {
+            Alert.alert(
+                'Delete Failed',
+                err.message || 'Something went wrong'
+            );
+        }
+    };
+
+
     return (
         <View style={styles.container}>
             <ScrollView showsVerticalScrollIndicator={false}>
@@ -146,7 +188,14 @@ export default function Profile({ navigation }) {
 
                 <View style={styles.content}>
                     <AppButton title="Logout" onPress={logout} />
+
+                    <AppButton
+                        title="Delete Account"
+                        onPress={handleDeleteAccount}
+                        style={{ marginTop: 10, backgroundColor: 'red' }}
+                    />
                 </View>
+
             </ScrollView>
 
             <BottomTabs />
