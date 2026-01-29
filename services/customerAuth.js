@@ -95,35 +95,37 @@ export const bookingEstimateApi = async (payload, token) => {
 // profile
 
 export const getCustomerProfileApi = async (token) => {
-
-  axios.get('http://10.0.2.2:3000/customer/profile', {
-  headers: {
-    Authorization: `Bearer ${token}`,
-  },
-})
-.then(res => console.log('PROFILE SUCCESS 👉', res.data))
-.catch(err => console.log('PROFILE FAIL 👉', err.message));
+  const res = await axios.get(
+    `${API_BASE_URL}customer/profile`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
 
   return res.data;
 };
 
+
 // ✅ UPDATE PROFILE
 export const updateCustomerProfileApi = async (payload) => {
-    const token = await AsyncStorage.getItem('token');
+  const token = await AsyncStorage.getItem('token');
 
-    const res = await axios.put(
-        'http://10.0.2.2:3000/customer/profile/update',
-        payload, // ✅ body
-        {
-            headers: {
-                Authorization: `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
-        }
-    );
+  const res = await axios.put(
+    `${API_BASE_URL}customer/profile/update`,
+    payload,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    }
+  );
 
-    return res.data;
+  return res.data;
 };
+
 
 export const getAddressFromLatLng = async (lat, lng) => {
   try {

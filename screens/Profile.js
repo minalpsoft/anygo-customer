@@ -29,73 +29,34 @@ export default function Profile({ navigation }) {
     const [showEditModal, setShowEditModal] = useState(false);
     const [loading, setLoading] = useState(true);
 
-    // const loadProfile = async () => {
-    //     try {
-    //         const token = await AsyncStorage.getItem('token');
-    //         console.log('cust profile token 👉', token);
-
-    //         const response = await axios.get(
-    //             'http://10.197.26.200:5000/customer/profile',
-    //             {
-    //                 headers: {
-    //                     Authorization: `Bearer ${token}`,
-    //                 },
-    //             }
-    //         );
-
-    //         console.log('PROFILE SUCCESS 👉', response.data);
-
-    //         // ✅ Set profile data
-    //         setProfile(response.data);
-
-    //         await AsyncStorage.setItem(
-    //             'customer',
-    //             JSON.stringify(response.data)
-    //         );
-
-    //     } catch (error) {
-    //         console.log(
-    //             'PROFILE ERROR 👉',
-    //             error?.response?.data || error.message
-    //         );
-    //         // Alert.alert('Error', 'Failed to load profile');
-    //     } finally {
-    //         setLoading(false);
-    //     }
-    // };
-
     const loadProfile = async () => {
-    try {
-        const token = await AsyncStorage.getItem('token');
-        console.log('cust profile token 👉', token);
+        try {
+            const token = await AsyncStorage.getItem('token');
 
-        const response = await axios.get(
-            `${API_BASE_URL}customer/profile`,
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
+            if (!token) {
+                throw new Error('No token found');
             }
-        );
 
-        console.log('PROFILE SUCCESS 👉', response.data);
+            const data = await getCustomerProfileApi(token);
 
-        setProfile(response.data);
+            console.log('PROFILE SUCCESS 👉', data);
 
-        await AsyncStorage.setItem(
-            'customer',
-            JSON.stringify(response.data)
-        );
+            setProfile(data);
 
-    } catch (error) {
-        console.log(
-            'PROFILE ERROR 👉',
-            error?.response?.data || error.message
-        );
-    } finally {
-        setLoading(false);
-    }
-};
+            await AsyncStorage.setItem(
+                'customer',
+                JSON.stringify(data)
+            );
+
+        } catch (error) {
+            console.log(
+                'PROFILE ERROR 👉',
+                error?.response?.data || error.message
+            );
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
         loadProfile();
@@ -110,7 +71,6 @@ export default function Profile({ navigation }) {
     const saveProfile = async () => {
         try {
             await updateCustomerProfileApi({
-                _id: profile._id,   // ✅ REQUIRED
                 firstName: editProfile.firstName,
                 lastName: editProfile.lastName,
                 email: editProfile.email,
@@ -118,7 +78,7 @@ export default function Profile({ navigation }) {
 
             Alert.alert('Success', 'Profile updated');
             setShowEditModal(false);
-            loadProfile();
+            await loadProfile(); // refresh UI
 
         } catch (err) {
             Alert.alert(
@@ -128,7 +88,6 @@ export default function Profile({ navigation }) {
         }
     };
 
-
     const logout = async () => {
         await AsyncStorage.clear();
         navigation.reset({
@@ -137,8 +96,6 @@ export default function Profile({ navigation }) {
         });
     };
 
-
-
     if (loading) {
         return (
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -146,7 +103,6 @@ export default function Profile({ navigation }) {
             </View>
         );
     }
-
 
     return (
         <View style={styles.container}>
@@ -244,7 +200,6 @@ export default function Profile({ navigation }) {
         </View>
     );
 }
-
 
 const styles = StyleSheet.create({
     container: {

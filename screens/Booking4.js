@@ -145,7 +145,7 @@ export default function Booking4({ route, navigation }) {
                     labourCount: accepted ? labourCount : 0,
                     receiverName: receiverName || undefined,
                     receiverMobile: receiverMobile || undefined,
-               paymentMethod: 'CASH', 
+                       paymentMethod: 'CASH', 
                 }),
             });
 
@@ -285,6 +285,13 @@ export default function Booking4({ route, navigation }) {
                             <Picker.Item label="2 Labour" value={2} />
                             <Picker.Item label="3 Labour" value={3} />
                             <Picker.Item label="4 Labour" value={4} />
+                            <Picker.Item label="5 Labour" value={5} />
+                            <Picker.Item label="6 Labour" value={6} />
+                            <Picker.Item label="7 Labour" value={7} />
+                            <Picker.Item label="8 Labour" value={8} />
+                            <Picker.Item label="9 Labour" value={9} />
+                            <Picker.Item label="10 Labour" value={10} />
+
                         </Picker>
                     </View>
                 </View>

@@ -56,35 +56,48 @@ export default function PaymentOptions({ route }) {
     const [finalFare, setFinalFare] = useState(0);
 
     useEffect(() => {
-    const fetchFinalFare = async () => {
-        try {
-            const token = await AsyncStorage.getItem('token'); // ✅ get token
+        const fetchFinalFare = async () => {
+            try {
+                const token = await AsyncStorage.getItem('token'); // ✅ get token
 
-            if (!token) {
-                console.log('❌ No token found');
-                return;
+                if (!token) {
+                    console.log('❌ No token found');
+                    return;
+                }
+
+                const res = await fetch(`${API_BASE_URL}booking/current`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+
+                const data = await res.json();
+
+                console.log('📦 backend booking:', data);
+
+                if (data?.finalFare != null) {
+                    setFinalFare(data.finalFare);
+                }
+            } catch (err) {
+                console.log('❌ fetch final fare error:', err);
             }
+        };
 
-            const res = await fetch(`${API_BASE_URL}booking/current`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
+        fetchFinalFare();
+    }, []);
 
-            const data = await res.json();
+    const savePaymentMethod = async () => {
+        const token = await AsyncStorage.getItem('token');
 
-            console.log('📦 backend booking:', data);
-
-            if (data?.finalFare != null) {
-                setFinalFare(data.finalFare);
-            }
-        } catch (err) {
-            console.log('❌ fetch final fare error:', err);
-        }
+        await fetch(`${API_BASE_URL}booking/${bookingId}/payment-method`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ paymentMethod }),
+        });
     };
-
-    fetchFinalFare();
-}, []);
 
 
     console.log('💳 PaymentOptions params:', route?.params);
@@ -141,23 +154,25 @@ export default function PaymentOptions({ route }) {
             <View style={styles.content}>
                 <AppButton
                     title="Pay Now"
-                    onPress={() => {
+                    onPress={async () => {
                         if (!paymentMethod) {
                             alert('Please select payment method');
                             return;
                         }
 
+                        await savePaymentMethod();
+
                         if (paymentMethod === 'ONLINE') {
                             navigation.navigate('RazorpayWeb', {
                                 amount: finalFare,
                                 bookingId,
-                                paymentMethod: 'ONLINE',
+                                // paymentMethod: 'ONLINE',
                             });
                         } else {
                             navigation.navigate('BookingSuccess', {
                                 amount: finalFare,
                                 bookingId,
-                                paymentMethod: 'CASH', // ✅ IMPORTANT
+                                // paymentMethod: 'CASH',
                             });
                         }
                     }}
