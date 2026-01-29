@@ -36,6 +36,24 @@ export default function Booking5({ route, navigation }) {
         durationMin,
     } = route.params;
 
+    useEffect(() => {
+        if (!mapRef.current) return;
+
+        const coords = [];
+
+        if (driverLocation) coords.push(driverLocation);
+        if (pickupLocation) coords.push(pickupLocation);
+        if (dropLocation) coords.push(dropLocation);
+
+        if (coords.length >= 2) {
+            mapRef.current.fitToCoordinates(coords, {
+                edgePadding: { top: 120, right: 120, bottom: 120, left: 120 },
+                animated: true,
+            });
+        }
+    }, [driverLocation, pickupLocation, dropLocation]);
+
+
     const routePoints = React.useMemo(() => {
         // DRIVER → PICKUP (until trip actually starts)
         if (
@@ -58,19 +76,6 @@ export default function Booking5({ route, navigation }) {
 
         return null;
     }, [driverLocation, pickupLocation, dropLocation, tripStatus]);
-
-    useEffect(() => {
-        if (!driverLocation || !mapRef.current) return;
-        if (routePoints) return; // ❗ STOP following driver when route is active
-
-        mapRef.current.animateCamera(
-            {
-                center: driverLocation,
-                zoom: 17,
-            },
-            { duration: 800 }
-        );
-    }, [driverLocation, routePoints]);
 
     useEffect(() => {
         fetchCurrentTrip();
@@ -268,15 +273,29 @@ export default function Booking5({ route, navigation }) {
                                 }}
                             >
 
+                                {/* ROUTE */}
+                                {routePoints && (
+                                    <MapViewDirections
+                                        origin={routePoints.origin}
+                                        destination={routePoints.destination}
+                                        apikey={GOOGLE_API_KEY}
+                                        strokeWidth={5}
+                                        strokeColor="#1E90FF"
+                                    />
+                                )}
 
                                 {/* DRIVER */}
                                 {driverLocation && (
-                                    <Marker
-                                        coordinate={driverLocation}
-                                        title="Driver"
-                                        pinColor="blue"
-                                    />
+                                    <Marker coordinate={driverLocation} anchor={{ x: 0.5, y: 0.5 }}>
+                                        <Image
+                                            source={require('../assets/carimg1.png')}
+                                            style={{ width: 40, height: 40 }}
+                                            resizeMode="contain"
+                                        />
+                                    </Marker>
                                 )}
+
+
 
 
 
@@ -299,28 +318,6 @@ export default function Booking5({ route, navigation }) {
                                     />
                                 )}
 
-
-                                {/* ROUTE */}
-                                {routePoints && (
-                                    <MapViewDirections
-                                        origin={routePoints.origin}
-                                        destination={routePoints.destination}
-                                        apikey={GOOGLE_API_KEY}
-                                        strokeWidth={5}
-                                        strokeColor="#1E90FF"
-                                        onReady={() => {
-                                            if (!mapRef.current) return;
-
-                                            mapRef.current.fitToCoordinates(
-                                                [routePoints.origin, routePoints.destination],
-                                                {
-                                                    edgePadding: { top: 120, right: 120, bottom: 120, left: 120 },
-                                                    animated: true,
-                                                }
-                                            );
-                                        }}
-                                    />
-                                )}
 
                             </MapView>
                         )}

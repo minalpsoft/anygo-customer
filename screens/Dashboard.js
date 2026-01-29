@@ -18,9 +18,9 @@ import Divider from '../components/Divider';
 import { useState, useEffect } from 'react';
 const GOOGLE_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
 import AsyncStorage from '@react-native-async-storage/async-storage';
-// const API_BASE_URL = 'http://10.197.26.200:5000/';
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
-// import { getAddressFromLatLng } from '../services/customerAuth';
+import * as Location from 'expo-location';
+import { Alert } from 'react-native';
 
 export default function Dashboard({ navigation }) {
 
@@ -34,6 +34,27 @@ export default function Dashboard({ navigation }) {
     const [trips, setTrips] = useState([]);
     const [loading, setLoading] = useState(true);
     const [addresses, setAddresses] = useState({});
+
+    const requestLocationPermission = async () => {
+        const askedBefore = await AsyncStorage.getItem('locationAsked');
+
+        if (askedBefore) return; // 🔥 already asked once
+
+        const { status } = await Location.requestForegroundPermissionsAsync();
+
+        await AsyncStorage.setItem('locationAsked', 'true');
+
+        if (status !== 'granted') {
+            Alert.alert(
+                'Location Required',
+                'Location access is required to book rides.'
+            );
+        }
+    };
+
+    useEffect(() => {
+        requestLocationPermission();
+    }, []);
 
     useEffect(() => {
         fetchTripHistory();
@@ -50,7 +71,6 @@ export default function Dashboard({ navigation }) {
             });
 
             const data = await res.json();
-            // console.log('TRIP HISTORY RESPONSE:', data);
             setTrips(data);
 
             const addrMap = {};
