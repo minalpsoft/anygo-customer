@@ -64,7 +64,7 @@ export default function TripHistory({ navigation }) {
             setAddresses(addrMap);
 
         } catch (err) {
-            console.log('TRIP HISTORY ERROR', err);
+            // console.log('TRIP HISTORY ERROR', err);
         } finally {
             setLoading(false);
         }
