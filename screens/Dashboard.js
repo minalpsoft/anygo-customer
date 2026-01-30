@@ -76,14 +76,16 @@ export default function Dashboard({ navigation }) {
             const addrMap = {};
 
             for (const trip of data) {
-                if (trip.pickupLocation) {
+                if (trip.pickupLocation?.lat && trip.pickupLocation?.lng) {
+
                     addrMap[`${trip._id}-pickup`] = await getAddressFromLatLng(
                         trip.pickupLocation.lat,
                         trip.pickupLocation.lng
                     );
                 }
 
-                if (trip.dropLocation) {
+                if (trip.dropLocation?.lat && trip.dropLocation?.lng) {
+
                     addrMap[`${trip._id}-drop`] = await getAddressFromLatLng(
                         trip.dropLocation.lat,
                         trip.dropLocation.lng
@@ -138,26 +140,26 @@ export default function Dashboard({ navigation }) {
     // };
 
     const getAddressFromLatLng = async (lat, lng) => {
-  if (lat == null || lng == null) {
-    return 'Location unavailable';
-  }
+        if (lat == null || lng == null) {
+            return 'Location unavailable';
+        }
 
-  try {
-    const res = await fetch(
-      `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${GOOGLE_API_KEY}`
-    );
-    const data = await res.json();
+        try {
+            const res = await fetch(
+                `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${GOOGLE_API_KEY}`
+            );
+            const data = await res.json();
 
-    if (data.results?.length > 0) {
-      return data.results[0].formatted_address;
-    }
+            if (data.results?.length > 0) {
+                return data.results[0].formatted_address;
+            }
 
-    return 'Address not found';
-  } catch (error) {
-    console.log('GEOCODE ERROR', error);
-    return 'Address not available';
-  }
-};
+            return 'Address not found';
+        } catch (error) {
+            console.log('GEOCODE ERROR', error);
+            return 'Address not available';
+        }
+    };
 
     const formatDuration = (min) => {
         if (!min) return '--';
