@@ -15,8 +15,8 @@ import TripHistory from './screens/TripHistory';
 import Profile from './screens/Profile';
 import PaymentOptions from './screens/PaymentOptions';
 import BookingSuccess from './screens/BookingSuccess';
-// import PaymentGateway from './screens/PaymentGateway';
-import RazorpayWeb from './screens/RazorpayWeb';
+import PaymentGateway from './screens/PaymentGateway';
+// import RazorpayWeb from './screens/RazorpayWeb';
 import SearchingDriver from './screens/SearchingDriver';
 import ForgotPassword from './screens/ForgotPassword';
 import ResetPassword from './screens/ResetPassword';
@@ -44,8 +44,8 @@ export default function App() {
         <Stack.Screen name="Profile" component={Profile} />
         <Stack.Screen name="PaymentOptions" component={PaymentOptions} />
         <Stack.Screen name="BookingSuccess" component={BookingSuccess} />
-        {/* <Stack.Screen name="PaymentGateway" component={PaymentGateway} /> */}
-        <Stack.Screen name="RazorpayWeb" component={RazorpayWeb} />
+        <Stack.Screen name="PaymentGateway" component={PaymentGateway} />
+        {/* <Stack.Screen name="RazorpayWeb" component={RazorpayWeb} /> */}
         <Stack.Screen name="SearchingDriver" component={SearchingDriver} />
         <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
         <Stack.Screen name="ResetPassword" component={ResetPassword} />

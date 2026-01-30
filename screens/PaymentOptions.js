@@ -163,7 +163,7 @@ export default function PaymentOptions({ route }) {
                         await savePaymentMethod();
 
                         if (paymentMethod === 'ONLINE') {
-                            navigation.navigate('RazorpayWeb1', {
+                            navigation.navigate('PaymentGateway', {
                                 amount: finalFare,
                                 bookingId,
                                 // paymentMethod: 'ONLINE',
