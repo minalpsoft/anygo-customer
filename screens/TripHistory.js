@@ -71,22 +71,26 @@ export default function TripHistory({ navigation }) {
     };
 
     const getAddressFromLatLng = async (lat, lng) => {
-        try {
-            const res = await fetch(
-                `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${GOOGLE_API_KEY}`
-            );
-            const data = await res.json();
+  if (lat == null || lng == null) {
+    return 'Location unavailable';
+  }
 
-            if (data.results?.length > 0) {
-                return data.results[0].formatted_address;
-            }
+  try {
+    const res = await fetch(
+      `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${GOOGLE_API_KEY}`
+    );
+    const data = await res.json();
 
-            return 'Address not found';
-        } catch (error) {
-            console.log('GEOCODE ERROR', error);
-            return 'Address not available';
-        }
-    };
+    if (data.results?.length > 0) {
+      return data.results[0].formatted_address;
+    }
+
+    return 'Address not found';
+  } catch (error) {
+    console.log('GEOCODE ERROR', error);
+    return 'Address not available';
+  }
+};
 
 
     const formatDate = (date) =>
