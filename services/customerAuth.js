@@ -127,25 +127,22 @@ export const updateCustomerProfileApi = async (payload) => {
 };
 
 
-const getAddressFromLatLng = async (lat, lng) => {
-  if (lat == null || lng == null) {
-    return 'Location unavailable';
-  }
-
+export const getAddressFromLatLng = async (lat, lng) => {
   try {
-    const res = await fetch(
-      `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${GOOGLE_API_KEY}`
-    );
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${GOOGLE_API_KEY}`;
+    const res = await fetch(url);
     const data = await res.json();
 
-    if (data.results?.length > 0) {
+    // console.log('🌍 GOOGLE GEO RESPONSE 👉', lat, lng, data.status);
+
+    if (data.status === 'OK' && data.results.length > 0) {
       return data.results[0].formatted_address;
     }
 
-    return 'Address not found';
-  } catch (error) {
-    console.log('GEOCODE ERROR', error);
-    return 'Address not available';
+    return 'Location not available';
+  } catch (err) {
+    // console.log('❌ GEO ERROR 👉', err.message);
+    return 'Location not available';
   }
 };
 
