@@ -100,7 +100,7 @@ export default function PaymentOptions({ route }) {
     };
 
 
-    console.log('💳 PaymentOptions params:', route?.params);
+    // console.log('💳 PaymentOptions params:', route?.params);
 
 
     return (

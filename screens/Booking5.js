@@ -15,6 +15,7 @@ import { useRef } from 'react';
 import { Alert } from 'react-native';
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 import { useIsFocused } from '@react-navigation/native';
+import { AnimatedRegion } from 'react-native-maps';
 
 export default function Booking5({ route, navigation }) {
     const [driverLocation, setDriverLocation] = useState(null);
@@ -27,6 +28,7 @@ export default function Booking5({ route, navigation }) {
     const pollingRef = useRef(null);
     const isFocused = useIsFocused();
     const [finalAmount, setFinalAmount] = useState(null);
+    const [mapReady, setMapReady] = useState(false);
 
     const {
         bookingId,
@@ -35,6 +37,24 @@ export default function Booking5({ route, navigation }) {
         distanceKm,
         durationMin,
     } = route.params;
+
+    const driverAnim = useRef(
+        new AnimatedRegion({
+            latitude: pickupLocation?.latitude || 19.0760,
+            longitude: pickupLocation?.longitude || 72.8777,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+        })
+    ).current;
+
+    useEffect(() => {
+        if (!driverLocation && pickupLocation) {
+            setDriverLocation({
+                latitude: pickupLocation.latitude + 0.0001, // tiny offset
+                longitude: pickupLocation.longitude + 0.0001,
+            });
+        }
+    }, [driverLocation, pickupLocation]);
 
     useEffect(() => {
         if (!mapRef.current) return;
@@ -54,28 +74,53 @@ export default function Booking5({ route, navigation }) {
     }, [driverLocation, pickupLocation, dropLocation]);
 
 
+    // const routePoints = React.useMemo(() => {
+    //     // DRIVER → PICKUP (until trip actually starts)
+    //     if (
+    //         driverLocation &&
+    //         pickupLocation &&
+    //         tripStatus !== 'TRIP_STARTED' &&
+    //         tripStatus !== 'TRIP_COMPLETED'
+    //     ) {
+    //         return { origin: driverLocation, destination: pickupLocation };
+    //     }
+
+    //     // PICKUP → DROP
+    //     if (
+    //         tripStatus === 'TRIP_STARTED' &&
+    //         pickupLocation &&
+    //         dropLocation
+    //     ) {
+    //         return { origin: pickupLocation, destination: dropLocation };
+    //     }
+
+    //     return null;
+    // }, [driverLocation, pickupLocation, dropLocation, tripStatus]);
+
     const routePoints = React.useMemo(() => {
-        // DRIVER → PICKUP (until trip actually starts)
+        if (!pickupLocation) return null;
+
+        // DRIVER → PICKUP
         if (
-            driverLocation &&
-            pickupLocation &&
-            tripStatus !== 'TRIP_STARTED' &&
-            tripStatus !== 'TRIP_COMPLETED'
+            tripStatus === 'DRIVER_ASSIGNED'
         ) {
-            return { origin: driverLocation, destination: pickupLocation };
+            return {
+                origin: driverLocation || pickupLocation, // fallback to pickup
+                destination: pickupLocation,
+            };
         }
 
         // PICKUP → DROP
-        if (
-            tripStatus === 'TRIP_STARTED' &&
-            pickupLocation &&
-            dropLocation
-        ) {
-            return { origin: pickupLocation, destination: dropLocation };
+        if (tripStatus === 'TRIP_STARTED' && dropLocation) {
+            return {
+                origin: pickupLocation,
+                destination: dropLocation,
+            };
         }
 
         return null;
-    }, [driverLocation, pickupLocation, dropLocation, tripStatus]);
+    }, [tripStatus, driverLocation, pickupLocation, dropLocation]);
+
 
     useEffect(() => {
         fetchCurrentTrip();
@@ -107,9 +152,9 @@ export default function Booking5({ route, navigation }) {
             }
 
             // console.log('LIVE TRIP DATA FULL', data);
-            console.log('📦 backend status:', data.status);
-            console.log('💰 backend finalFare:', data.finalFare);
-            console.log('🚦 frontend finalAmount:', finalAmount);
+            // console.log('📦 backend status:', data.status);
+            // console.log('💰 backend finalFare:', data.finalFare);
+            // console.log('🚦 frontend finalAmount:', finalAmount);
             // ✅ STATUS
             setTripStatus(data.status);
             setTrip(data);
@@ -120,20 +165,28 @@ export default function Booking5({ route, navigation }) {
             }
 
             // ✅ DRIVER LOCATION
-            if (data.lastDriverLocation?.lat && data.lastDriverLocation?.lng) {
+            // ✅ DRIVER LOCATION (LIVE)
+            if (
+                data.lastDriverLocation &&
+                typeof data.lastDriverLocation.lat === 'number' &&
+                typeof data.lastDriverLocation.lng === 'number'
+            ) {
                 setDriverLocation({
-                    latitude: Number(data.lastDriverLocation.lat),
-                    longitude: Number(data.lastDriverLocation.lng),
+                    latitude: data.lastDriverLocation.lat,
+                    longitude: data.lastDriverLocation.lng,
                 });
             }
-            else if (data.driver?.currentLocation?.coordinates?.length === 2) {
+            else if (
+                data.driver?.currentLocation?.coordinates?.length === 2
+            ) {
                 const [lng, lat] = data.driver.currentLocation.coordinates;
 
                 setDriverLocation({
-                    latitude: Number(lat),
-                    longitude: Number(lng),
+                    latitude: lat,
+                    longitude: lng,
                 });
             }
+
 
             // ✅ PICKUP & DROP
             if (data.pickupLocation?.lat && data.pickupLocation?.lng) {
@@ -157,17 +210,29 @@ export default function Booking5({ route, navigation }) {
     };
 
     useEffect(() => {
+        if (!driverLocation) return;
+
+        driverAnim.timing({
+            latitude: driverLocation.latitude,
+            longitude: driverLocation.longitude,
+            duration: 3000,
+            useNativeDriver: false,
+        }).start();
+    }, [driverLocation]);
+
+
+    useEffect(() => {
         if (!driverLocation || !mapRef.current) return;
-        if (routePoints) return;
 
         mapRef.current.animateCamera(
             {
                 center: driverLocation,
                 zoom: 17,
             },
-            { duration: 800 }
+            { duration: 1000 }
         );
-    }, [driverLocation, routePoints]);
+    }, [driverLocation]);
+
 
     useEffect(() => {
         if (!mapRef.current || !routePoints) return;
@@ -234,6 +299,14 @@ export default function Booking5({ route, navigation }) {
         console.log('🔥 CURRENT tripStatus:', tripStatus);
     }, [tripStatus]);
 
+    console.log('ROUTE:', routePoints);
+    console.log('DRIVER:', driverLocation);
+    console.log('PICKUP:', pickupLocation);
+    console.log('DROP:', dropLocation);
+    console.log('STATUS:', tripStatus);
+    console.log('GOOGLE KEY:', GOOGLE_API_KEY);
+
+
     return (
         <View style={styles.container}>
             <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -265,6 +338,7 @@ export default function Booking5({ route, navigation }) {
                             <MapView
                                 ref={mapRef}
                                 style={StyleSheet.absoluteFillObject}
+                                onMapReady={() => setMapReady(true)}
                                 initialRegion={{
                                     latitude: pickupLocation?.latitude || 19.0760,
                                     longitude: pickupLocation?.longitude || 72.8777,
@@ -273,46 +347,47 @@ export default function Booking5({ route, navigation }) {
                                 }}
                             >
 
+
                                 {/* ROUTE */}
-                                {routePoints && (
+                                {mapReady && routePoints && (
                                     <MapViewDirections
+                                        key={`${routePoints.origin.latitude}-${routePoints.destination.latitude}`}
                                         origin={routePoints.origin}
                                         destination={routePoints.destination}
                                         apikey={GOOGLE_API_KEY}
+                                        mode="DRIVING"
+                                        region="IN"
                                         strokeWidth={5}
                                         strokeColor="#1E90FF"
+                                        onError={(e) => console.log('❌ DIRECTIONS ERROR:', e)}
                                     />
+
                                 )}
 
                                 {/* DRIVER */}
                                 {driverLocation && (
-                                    <Marker coordinate={driverLocation} anchor={{ x: 0.5, y: 0.5 }}>
+                                    <Marker.Animated coordinate={driverAnim} anchor={{ x: 0.5, y: 0.5 }}>
                                         <Image
                                             source={require('../assets/carimg1.png')}
                                             style={{ width: 40, height: 40 }}
-                                            resizeMode="contain"
                                         />
-                                    </Marker>
+                                    </Marker.Animated>
                                 )}
 
 
-
-
-
                                 {/* PICKUP */}
-                                {tripStatus !== 'TRIP_STARTED' && pickupLocation && (
+                                {pickupLocation && (
                                     <Marker
-                                        coordinate={pickupLocation}   // ✅ DIRECT
+                                        coordinate={pickupLocation}
                                         pinColor="red"
                                         title="Pickup"
                                     />
                                 )}
 
-
                                 {/* DROP */}
-                                {tripStatus === 'TRIP_STARTED' && dropLocation && (
+                                {dropLocation && (
                                     <Marker
-                                        coordinate={dropLocation}     // ✅ DIRECT
+                                        coordinate={dropLocation}
                                         pinColor="green"
                                         title="Drop"
                                     />
