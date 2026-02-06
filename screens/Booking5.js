@@ -48,15 +48,6 @@ export default function Booking5({ route, navigation }) {
     ).current;
 
     useEffect(() => {
-        if (!driverLocation && pickupLocation) {
-            setDriverLocation({
-                latitude: pickupLocation.latitude + 0.0001, // tiny offset
-                longitude: pickupLocation.longitude + 0.0001,
-            });
-        }
-    }, [driverLocation, pickupLocation]);
-
-    useEffect(() => {
         if (!mapRef.current) return;
 
         const coords = [];
@@ -73,32 +64,8 @@ export default function Booking5({ route, navigation }) {
         }
     }, [driverLocation, pickupLocation, dropLocation]);
 
-
-    // const routePoints = React.useMemo(() => {
-    //     // DRIVER → PICKUP (until trip actually starts)
-    //     if (
-    //         driverLocation &&
-    //         pickupLocation &&
-    //         tripStatus !== 'TRIP_STARTED' &&
-    //         tripStatus !== 'TRIP_COMPLETED'
-    //     ) {
-    //         return { origin: driverLocation, destination: pickupLocation };
-    //     }
-
-    //     // PICKUP → DROP
-    //     if (
-    //         tripStatus === 'TRIP_STARTED' &&
-    //         pickupLocation &&
-    //         dropLocation
-    //     ) {
-    //         return { origin: pickupLocation, destination: dropLocation };
-    //     }
-
-    //     return null;
-    // }, [driverLocation, pickupLocation, dropLocation, tripStatus]);
-
     const routePoints = React.useMemo(() => {
-        if (!pickupLocation) return null;
+        if (!driverLocation) return null;
 
         // DRIVER → PICKUP
         if (
@@ -113,7 +80,7 @@ export default function Booking5({ route, navigation }) {
         // PICKUP → DROP
         if (tripStatus === 'TRIP_STARTED' && dropLocation) {
             return {
-                origin: pickupLocation,
+                origin: driverLocation,
                 destination: dropLocation,
             };
         }
@@ -304,7 +271,7 @@ export default function Booking5({ route, navigation }) {
     console.log('PICKUP:', pickupLocation);
     console.log('DROP:', dropLocation);
     console.log('STATUS:', tripStatus);
-    console.log('GOOGLE KEY:', GOOGLE_API_KEY);
+    // console.log('GOOGLE KEY:', GOOGLE_API_KEY);
 
 
     return (
@@ -351,7 +318,7 @@ export default function Booking5({ route, navigation }) {
                                 {/* ROUTE */}
                                 {mapReady && routePoints && (
                                     <MapViewDirections
-                                        key={`${routePoints.origin.latitude}-${routePoints.destination.latitude}`}
+                                        key={`${tripStatus}-${driverLocation?.latitude}-${driverLocation?.longitude}`}
                                         origin={routePoints.origin}
                                         destination={routePoints.destination}
                                         apikey={GOOGLE_API_KEY}
@@ -361,8 +328,8 @@ export default function Booking5({ route, navigation }) {
                                         strokeColor="#1E90FF"
                                         onError={(e) => console.log('❌ DIRECTIONS ERROR:', e)}
                                     />
-
                                 )}
+
 
                                 {/* DRIVER */}
                                 {driverLocation && (
@@ -370,13 +337,14 @@ export default function Booking5({ route, navigation }) {
                                         <Image
                                             source={require('../assets/carimg1.png')}
                                             style={{ width: 40, height: 40 }}
+                                            resizeMode="contain"
                                         />
                                     </Marker.Animated>
                                 )}
 
 
-                                {/* PICKUP */}
-                                {pickupLocation && (
+                                {/* PICKUP (only before trip starts) */}
+                                {pickupLocation && tripStatus !== 'TRIP_STARTED' && (
                                     <Marker
                                         coordinate={pickupLocation}
                                         pinColor="red"
@@ -384,11 +352,12 @@ export default function Booking5({ route, navigation }) {
                                     />
                                 )}
 
+
                                 {/* DROP */}
-                                {dropLocation && (
+                                {dropLocation && tripStatus === 'TRIP_STARTED' && (
                                     <Marker
                                         coordinate={dropLocation}
-                                        pinColor="green"
+                                        pinColor="blue"
                                         title="Drop"
                                     />
                                 )}
